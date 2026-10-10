@@ -1,0 +1,18 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+
+# Exported builds and signing keys (never commit keystores)
+/export/
+/build/
+*.apk
+*.aab
+*.idsig
+*.keystore
+*.jks
+
+# Local tooling / OS clutter
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db

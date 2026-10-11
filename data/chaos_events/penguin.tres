@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="ChaosEvent" format=3]
+
+[ext_resource type="Script" path="res://scripts/chaos/chaos_event.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"penguin"
+display_name = "Penguin Mode"
+tagline = "Waddle waddle waddle!"
+tip = "You can only waddle now. Keep going in short steps!"
+duration = 12.0
+weight = 1.0
+color = Color(0.25, 0.55, 0.95, 1)
+icon = &"penguin"
+exclusive_group = &"gait"
+modifiers = {
+&"cake_wobble": 1.35,
+&"waddle": 1.0,
+&"speed": 0.8,
+&"jump": 0.85
+}
+changes_controls = false
+vfx = &"penguin"
+reaction = &"surprised"

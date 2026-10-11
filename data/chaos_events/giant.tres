@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="ChaosEvent" format=3]
+
+[ext_resource type="Script" path="res://scripts/chaos/chaos_event.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"giant"
+display_name = "Giant Mode"
+tagline = "Everybody is ENORMOUS!"
+tip = "You're huge! Big steps and big jumps. Mind the low ceilings."
+duration = 12.0
+weight = 1.0
+color = Color(1.0, 0.55, 0.2, 1)
+icon = &"giant"
+exclusive_group = &"size"
+modifiers = {
+&"cake_wobble": 0.9,
+&"size": 1.75,
+&"speed": 1.1,
+&"jump": 1.15,
+&"push": 2.5
+}
+changes_controls = false
+vfx = &"giant"
+reaction = &"happy"

@@ -1,0 +1,85 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://scripts/match/match_controller.gd" id="1_match"]
+[ext_resource type="Script" path="res://scripts/core/party_camera.gd" id="2_camera"]
+[ext_resource type="Script" path="res://scripts/match/match_fx.gd" id="3_fx"]
+[ext_resource type="Script" path="res://scripts/chaos/chaos_manager.gd" id="4_chaos"]
+[ext_resource type="Script" path="res://scripts/ui/hud.gd" id="5_hud"]
+[ext_resource type="Script" path="res://scripts/ui/touch_controls.gd" id="6_touch"]
+[ext_resource type="Script" path="res://scripts/ui/pause_menu.gd" id="7_pause"]
+[ext_resource type="Script" path="res://scripts/ui/results_screen.gd" id="8_results"]
+[ext_resource type="Script" path="res://scripts/ui/debug_panel.gd" id="9_debug"]
+
+[node name="Match" type="Node"]
+process_physics_priority = -10
+script = ExtResource("1_match")
+
+[node name="World" type="Node3D" parent="."]
+
+[node name="Players" type="Node3D" parent="World"]
+
+[node name="Camera" type="Camera3D" parent="World"]
+fov = 55.0
+far = 500.0
+script = ExtResource("2_camera")
+
+[node name="Fx" type="Node3D" parent="World"]
+script = ExtResource("3_fx")
+
+[node name="ChaosManager" type="Node" parent="."]
+script = ExtResource("4_chaos")
+
+[node name="UI" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="Hud" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("5_hud")
+
+[node name="TouchControls" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("6_touch")
+
+[node name="Overlay" type="CanvasLayer" parent="."]
+process_mode = 3
+layer = 20
+
+[node name="DebugPanel" type="Control" parent="Overlay"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("9_debug")
+
+[node name="PauseMenu" type="Control" parent="Overlay"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("7_pause")
+
+[node name="ResultsScreen" type="Control" parent="Overlay"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("8_results")

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ChaosEvent" format=3]
+
+[ext_resource type="Script" path="res://scripts/chaos/chaos_event.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"moon"
+display_name = "Moon Mode"
+tagline = "One small hop for a blob!"
+tip = "Low gravity! Jumps go super high and you float down slowly."
+duration = 12.0
+weight = 1.0
+color = Color(0.56, 0.5, 0.98, 1)
+icon = &"moon"
+exclusive_group = &"gravity"
+modifiers = {
+&"cake_wobble": 0.85,
+&"gravity": 0.45,
+&"jump": 1.0
+}
+changes_controls = false
+vfx = &"moon"
+reaction = &"happy"

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ChaosEvent" format=3]
+
+[ext_resource type="Script" path="res://scripts/chaos/chaos_event.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"reverse"
+display_name = "Reverse Mode"
+tagline = "Left is right! Up is down!"
+tip = "Controls are flipped. Push the stick the OTHER way!"
+duration = 9.0
+weight = 0.8
+color = Color(0.66, 0.32, 0.95, 1)
+icon = &"reverse"
+exclusive_group = &""
+modifiers = {
+&"cake_wobble": 1.2,
+&"reverse": true
+}
+changes_controls = true
+vfx = &"reverse"
+reaction = &"dizzy"

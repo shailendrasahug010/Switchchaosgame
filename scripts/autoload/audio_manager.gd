@@ -24,10 +24,17 @@ var _sfx_bus := 0
 var _music_bus := 0
 ## Last sounds requested — tests and the debug panel read this.
 var recent: Array[StringName] = []
+## With no sound device at all (headless tests, the online room server) no
+## streams are loaded or played; hooks are still recorded in [member recent].
+var silent: bool = false
+## Online room server: every sound hook is also handed to this callable
+## (id, pitch, volume_db) so the server can send it to the players' phones.
+var forward: Callable = Callable()
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	silent = AudioServer.get_driver_name() == "Dummy"
 	_sfx_bus = _ensure_bus("SFX")
 	_music_bus = _ensure_bus("Music")
 	for i in POOL_SIZE:
@@ -69,6 +76,10 @@ func play(id: StringName, pitch: float = 1.0, volume_db: float = 0.0) -> bool:
 	recent.append(id)
 	if recent.size() > 32:
 		recent.remove_at(0)
+	if forward.is_valid():
+		forward.call(id, pitch, volume_db)
+	if silent:
+		return has_sound(id)
 	var stream := _get_stream(id)
 	if stream == null:
 		return false
@@ -85,20 +96,33 @@ func play_varied(id: StringName, base_pitch: float = 1.0, spread: float = 0.08, 
 	return play(id, base_pitch * randf_range(1.0 - spread, 1.0 + spread), volume_db)
 
 
+## True when a sound file exists for [param id] (used by tests and tools).
+func has_sound(id: StringName) -> bool:
+	for ext: String in [".ogg", ".wav"]:
+		if ResourceLoader.exists(AUDIO_DIR + String(id) + ext):
+			return true
+	return false
+
+
 func play_music(track: StringName) -> void:
 	if track == _music_id and _music.playing:
 		return
 	_music_id = track
+	if silent:
+		return
 	var stream := _get_stream(StringName(MUSIC_TRACKS.get(track, String(track))))
 	if stream == null:
 		_music.stop()
 		return
-	if stream is AudioStreamWAV:
+	# Music always loops, whatever the import settings say.
+	if stream is AudioStreamOggVorbis:
+		(stream as AudioStreamOggVorbis).loop = true
+	elif stream is AudioStreamWAV:
 		var wav := stream as AudioStreamWAV
 		if wav.loop_mode == AudioStreamWAV.LOOP_DISABLED:
 			wav.loop_mode = AudioStreamWAV.LOOP_FORWARD
 			wav.loop_begin = 0
-			wav.loop_end = _wav_frame_count(wav)
+			wav.loop_end = int(wav.get_length() * wav.mix_rate)
 	_music.stream = stream
 	_music.play()
 
@@ -108,14 +132,19 @@ func stop_music() -> void:
 	_music.stop()
 
 
+## Releases every stream when the game closes, so no playback is left running
+## while the engine shuts down.
+func _exit_tree() -> void:
+	_music.stop()
+	_music.stream = null
+	for p in _pool:
+		p.stop()
+		p.stream = null
+	_streams.clear()
+
+
 func is_music_playing() -> bool:
 	return _music.playing
-
-
-func _wav_frame_count(wav: AudioStreamWAV) -> int:
-	var bytes_per_sample := 2 if wav.format == AudioStreamWAV.FORMAT_16_BITS else 1
-	var channels := 2 if wav.stereo else 1
-	return wav.data.size() / (bytes_per_sample * channels)
 
 
 func _take_player() -> AudioStreamPlayer:

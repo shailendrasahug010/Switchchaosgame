@@ -261,7 +261,7 @@ func _on_chaos_started(ev: ChaosEvent) -> void:
 			tip = "Bounce Mode: bounce onto a button to stomp it!"
 		&"sticky":
 			tip = "Sticky Mode: the runaway car is stuck in the honey too!"
-	if tip != "":
+	if tip != "" and bool(GameState.get_setting("show_tips", true)):
 		_pending_tip = tip
 		_pending_tip_at = MatchClock.time + 2.6
 

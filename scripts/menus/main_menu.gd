@@ -67,8 +67,11 @@ func _ready() -> void:
 
 	col.add_child(UiKit.spacer())
 	var stats := GameState.stats
-	var info := UiKit.label("Rounds played: %d   Stars: %d   v%s" % [int(stats.rounds_played), int(stats.stars),
-			ProjectSettings.get_setting("application/config/version", "0.1")], &"SmallLabel")
-	col.add_child(info)
+	var chip := UiKit.color_panel(Color(0.14, 0.12, 0.3, 0.72), 18, 8)
+	chip.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	chip.add_child(UiKit.label("Rounds played: %d    Stars: %d    v%s" % [int(stats.rounds_played), int(stats.stars),
+			ProjectSettings.get_setting("application/config/version", "0.1")], &"SmallLabel"))
+	col.add_child(chip)
 	UiKit.pop_in(_play, 0.2)
 	_play.grab_focus.call_deferred()

@@ -205,7 +205,7 @@ func _on_chaos_started(ev: ChaosEvent) -> void:
 			tip = "Slippery Mode: careful on the narrow bits!"
 		&"tiny":
 			tip = "Tiny Mode: little steps, but the bounce pads still launch you high!"
-	if tip != "":
+	if tip != "" and bool(GameState.get_setting("show_tips", true)):
 		_pending_tip = tip
 		_pending_tip_at = MatchClock.time + 2.6
 

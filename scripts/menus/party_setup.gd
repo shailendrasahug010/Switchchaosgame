@@ -10,7 +10,7 @@ const MODE_ICONS := {&"cake_dash": &"cake", &"button_mayhem": &"buttons", &"boun
 var _party: Dictionary
 var _mode_buttons: Dictionary = {}
 var _count_buttons: Array[Button] = []
-var _slots_row: HBoxContainer
+var _slots_row: HFlowContainer
 var _chaos_btn: Button
 var _events_btn: Button
 var _length_btn: Button
@@ -64,32 +64,37 @@ func _build() -> void:
 	head.add_child(_start)
 
 	col.add_child(UiKit.label("1. Pick a game", &"SubHeaderLabel"))
-	var modes := UiKit.hbox(14)
+	# Flow containers wrap onto a second line on narrow (4:3 tablet) screens.
+	var modes := _flow(14)
 	col.add_child(modes)
 	for m in Catalog.MODES:
 		modes.add_child(_mode_card(m.id, m.name, m.blurb, m.color))
 	modes.add_child(_mode_card(&"party", "Chaos Party", "Play all three games in a row!", Color("ffb35c")))
 
 	col.add_child(UiKit.label("2. Who's playing?", &"SubHeaderLabel"))
-	var count_row := UiKit.hbox(12)
+	var count_row := _flow(12)
 	col.add_child(count_row)
+	var picked := UiKit.style(UiKit.VIOLET, 22, 12, UiKit.SUN, 6, 4)
 	for n in [2, 3, 4]:
 		var b := UiKit.button("%d players" % n, &"DarkButton", 64)
 		b.toggle_mode = true
+		b.custom_minimum_size.x = 170
+		b.add_theme_stylebox_override("pressed", picked)
+		b.add_theme_stylebox_override("hover_pressed", picked)
 		b.pressed.connect(func() -> void:
 			_party.count = n
 			_refresh_all())
 		count_row.add_child(b)
 		_count_buttons.append(b)
 	_note = UiKit.wrap_label("", &"SmallLabel")
-	_note.custom_minimum_size.x = 560
+	_note.custom_minimum_size.x = 480
 	_note.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	count_row.add_child(_note)
-	_slots_row = UiKit.hbox(14)
+	_slots_row = _flow(14)
 	col.add_child(_slots_row)
 
 	col.add_child(UiKit.label("3. Rules", &"SubHeaderLabel"))
-	var rules := UiKit.hbox(12)
+	var rules := _flow(12)
 	col.add_child(rules)
 	_chaos_btn = UiKit.button("", &"PinkButton", 70)
 	_chaos_btn.pressed.connect(func() -> void:
@@ -111,10 +116,17 @@ func _build() -> void:
 	rules.add_child(_skill_btn)
 
 
+func _flow(separation: int) -> HFlowContainer:
+	var f := HFlowContainer.new()
+	f.add_theme_constant_override("h_separation", separation)
+	f.add_theme_constant_override("v_separation", separation)
+	return f
+
+
 func _mode_card(id: StringName, title: String, blurb: String, color: Color) -> Button:
 	var b := Button.new()
 	b.toggle_mode = true
-	b.custom_minimum_size = Vector2(250, 150)
+	b.custom_minimum_size = Vector2(272, 150)
 	b.focus_mode = Control.FOCUS_ALL
 	var normal := UiKit.style(color.darkened(0.1), 26, 14, Color(1, 1, 1, 0.6), 0, 3)
 	var selected := UiKit.style(color, 26, 14, Color("ffd23f"), 0, 7)
@@ -133,16 +145,16 @@ func _mode_card(id: StringName, title: String, blurb: String, color: Color) -> B
 	b.add_child(inner)
 	var top := UiKit.hbox(8)
 	inner.add_child(top)
-	var ic := Icon.new(MODE_ICONS.get(id, &"star"), Color.WHITE, 46)
+	var ic := Icon.new(MODE_ICONS.get(id, &"star"), Color.WHITE, 44)
 	ic.shadow = true
 	top.add_child(ic)
 	var name_label := UiKit.label(title, &"HudLabel")
-	name_label.add_theme_font_size_override("font_size", 28)
+	name_label.add_theme_font_size_override("font_size", 26)
 	top.add_child(name_label)
 	var text := UiKit.wrap_label(blurb, &"HudLabel")
 	text.add_theme_font_size_override("font_size", 19)
 	text.add_theme_constant_override("outline_size", 6)
-	text.custom_minimum_size.x = 220
+	text.custom_minimum_size.x = 240
 	inner.add_child(text)
 	b.pressed.connect(func() -> void:
 		_party.mode = String(id)
@@ -197,6 +209,7 @@ func _cycle_character(i: int, step: int) -> void:
 	_party.characters[i] = String(Catalog.CHARACTERS[idx].id)
 	if i == 0:
 		GameState.set_profile(Catalog.CHARACTERS[idx].id, GameState.profile.hat, GameState.profile.paint)
+	AudioManager.play(&"voice_happy", Catalog.CHARACTERS[idx].voice_pitch, -4.0)
 	_refresh_slots()
 
 

@@ -15,6 +15,8 @@ signal fell_out
 signal respawned
 signal knocked(direction: Vector3)
 signal interact_requested(player: PlayerCharacter)
+## A funny reaction (surprised, dizzy, happy, oops): the match plays a voice for it.
+signal reacted(kind: StringName)
 
 @export_group("Movement")
 @export var max_speed: float = 7.0
@@ -302,7 +304,7 @@ func knock(from_point: Vector3, strength: float = 8.0, lift: float = 4.5) -> voi
 	velocity.y = maxf(velocity.y, lift)
 	_stun = 0.45
 	_jumping = false
-	visual.react(&"dizzy")
+	react(&"dizzy")
 	knocked.emit(away)
 
 
@@ -410,3 +412,4 @@ func celebrate() -> void:
 
 func react(kind: StringName) -> void:
 	visual.react(kind)
+	reacted.emit(kind)

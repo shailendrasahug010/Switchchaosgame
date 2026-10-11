@@ -22,6 +22,8 @@ const PLAYER_SCENE := preload("res://scenes/player/player.tscn")
 const INTRO_TIME := 3.4
 const COUNTDOWN_TIME := 3.0
 const FINISH_TIME := 3.0
+const VOICE_GAP_ANY := 0.15
+const VOICE_GAP_SAME := 0.6
 
 const COMMON_AWARDS: Array[Dictionary] = [
 	{"stat": &"stars", "title": "Star Catcher", "text": "Grabbed the most stars"},
@@ -70,6 +72,8 @@ var _finish_requested := false
 var _finish_success := false
 var _last_countdown := -1
 var _last_positions: Dictionary = {}
+var _voice_any_at := -10.0
+var _voice_last: Dictionary = {}
 
 
 func _ready() -> void:
@@ -164,6 +168,7 @@ func _spawn_players() -> void:
 		p.respawned.connect(func() -> void:
 			AudioManager.play_varied(&"respawn_pop")
 			fx.puff(p.global_position + Vector3(0, 0.6, 0), Color.WHITE))
+		p.reacted.connect(_on_player_reacted.bind(p))
 		players.append(p)
 		_last_positions[i] = p.global_position
 	mode.on_players_spawned(players)
@@ -332,6 +337,18 @@ func _on_scored(_player_index: int, category: StringName, points: int, _reason: 
 
 func show_message(text: String, color: Color = Color.WHITE, seconds: float = 2.2) -> void:
 	message_requested.emit(text, color, seconds)
+
+
+## Character voices ("wee-hee!", "uh-oh"). When several creatures react at
+## once (everyone gasps at a chaos switch) only one voice plays.
+func _on_player_reacted(kind: StringName, p: PlayerCharacter) -> void:
+	var now := Time.get_ticks_msec() / 1000.0
+	if now - _voice_any_at < VOICE_GAP_ANY or now - float(_voice_last.get(kind, -10.0)) < VOICE_GAP_SAME:
+		return
+	_voice_any_at = now
+	_voice_last[kind] = now
+	var pitch: float = Catalog.character(p.character_id).voice_pitch
+	AudioManager.play_varied(StringName("voice_%s" % kind), pitch, 0.05, -3.0)
 
 
 # ---------------------------------------------------------------- chaos presentation

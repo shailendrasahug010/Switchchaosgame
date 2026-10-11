@@ -49,6 +49,7 @@ func reset_to_defaults() -> void:
 		"reduced_motion": false,    # no camera shake, gentler flashes
 		"debug_tools": OS.is_debug_build(),
 		"show_tips": true,
+		"online_allowed": false,    # a grown-up switches this on (Grown-ups page)
 	}
 	stats = {
 		"rounds_played": 0,

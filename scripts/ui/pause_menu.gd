@@ -55,10 +55,12 @@ func _refresh_sound() -> void:
 func open() -> void:
 	_refresh_sound()
 	UiKit.pop_in(_card, 0.0, 0.8)
-	_resume.grab_focus.call_deferred()
+	UiKit.focus_later(_resume)
 
 
+## While paused the match itself gets no input, so the same keys that paused
+## (Esc / P / gamepad Start) and "back" resume from here.
 func _unhandled_input(event: InputEvent) -> void:
-	if visible and event.is_action_pressed(&"ui_cancel") and not event.is_action_pressed(&"pause"):
+	if visible and (event.is_action_pressed(&"ui_cancel") or event.is_action_pressed(&"pause")):
 		match_ctl.set_paused(false)
 		get_viewport().set_input_as_handled()

@@ -95,7 +95,7 @@ func _physics_process(delta: float) -> void:
 		if p.global_position.y < 0.2 and not p.is_on_floor():
 			input.jump_held = false
 		if input.move == Vector2.ZERO and p.is_on_floor():
-			p.facing = p.facing.slerp(Vector3(0, 0, 1), clampf(delta * 3.0, 0, 1)).normalized()
+			p.facing = PlayerCharacter.turn_toward(p.facing, Vector3(0, 0, 1), delta * 3.0)
 	_next_trick -= delta
 	if _next_trick <= 0.0:
 		_next_trick = _rng.randf_range(4.0, 7.0)

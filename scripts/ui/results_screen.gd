@@ -101,7 +101,7 @@ func show_results(r: Dictionary) -> void:
 	menu.pressed.connect(func() -> void: match_ctl.quit_to_menu())
 	brow.add_child(menu)
 	_buttons = [again, next, menu]
-	again.grab_focus.call_deferred()
+	UiKit.focus_later(again)
 
 
 func _player_card(info: Dictionary, rank: int, team: bool, success: bool) -> Control:

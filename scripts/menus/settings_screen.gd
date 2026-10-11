@@ -175,7 +175,7 @@ func _ask_reset() -> void:
 		GameState.reset_progress()
 		_confirm.queue_free())
 	row.add_child(wipe)
-	keep.grab_focus.call_deferred()
+	UiKit.focus_later(keep)
 
 
 func _back() -> void:

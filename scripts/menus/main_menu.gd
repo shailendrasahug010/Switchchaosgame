@@ -74,4 +74,4 @@ func _ready() -> void:
 			ProjectSettings.get_setting("application/config/version", "0.1")], &"SmallLabel"))
 	col.add_child(chip)
 	UiKit.pop_in(_play, 0.2)
-	_play.grab_focus.call_deferred()
+	UiKit.focus_later(_play)

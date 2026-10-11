@@ -242,10 +242,20 @@ func _physics_process(delta: float) -> void:
 
 	if horizontal.length() > 0.4:
 		var want := horizontal.normalized()
-		facing = facing.slerp(want, clampf(turn_speed * delta, 0.0, 1.0)).normalized() if facing.dot(want) > -0.98 else want
+		facing = turn_toward(facing, want, turn_speed * delta) if facing.dot(want) > -0.98 else want
 
 	if global_position.y < kill_y:
 		_start_respawn()
+
+
+## Turns flat direction [param from] toward [param to] by [param weight]
+## (0..1). Works on yaw angles: Vector3.slerp() loses precision when the two
+## directions are almost equal (running straight) and then reports errors.
+static func turn_toward(from: Vector3, to: Vector3, weight: float) -> Vector3:
+	var a := atan2(from.x, from.z)
+	var b := atan2(to.x, to.z)
+	var r := lerp_angle(a, b, clampf(weight, 0.0, 1.0))
+	return Vector3(sin(r), 0.0, cos(r))
 
 
 func _try_floor_bounce(impact: float, standing: bool = false) -> void:

@@ -32,6 +32,7 @@ var _banner_tagline: Label
 var _banner_tip: Label
 var _banner_count: Label
 var _banner_hide_at := -1.0
+var _banner_tween: Tween
 
 var _mission_card: PanelContainer
 var _countdown: Label
@@ -528,6 +529,7 @@ func _set_banner_event(ev: ChaosEvent) -> void:
 
 
 func _on_event_announced(ev: ChaosEvent, lead_time: float) -> void:
+	_stop_banner_tween()
 	_set_banner_event(ev)
 	_banner_kicker.text = "CHAOS SWITCH IN..."
 	_banner_count.text = str(ceili(lead_time))
@@ -549,6 +551,7 @@ func _on_countdown_changed(_ev: ChaosEvent, seconds_left: int) -> void:
 
 
 func _on_event_started(ev: ChaosEvent) -> void:
+	_stop_banner_tween()
 	_set_banner_event(ev)
 	_banner_kicker.text = "THE RULES SWITCHED!"
 	_banner_title.text = ev.display_name.to_upper() + "!"
@@ -601,11 +604,19 @@ func _add_chaos_row(ev: ChaosEvent) -> void:
 func _hide_banner() -> void:
 	if not _banner.visible:
 		return
-	var t := create_tween()
-	t.tween_property(_banner, "modulate:a", 0.0, 0.25)
-	t.tween_callback(func() -> void:
+	_stop_banner_tween()
+	_banner_tween = create_tween()
+	_banner_tween.tween_property(_banner, "modulate:a", 0.0, 0.25)
+	_banner_tween.tween_callback(func() -> void:
 		_banner.visible = false
 		_banner.modulate.a = 1.0)
+
+
+## A new card must never be hidden by the fade-out of the previous one.
+func _stop_banner_tween() -> void:
+	if _banner_tween and _banner_tween.is_valid():
+		_banner_tween.kill()
+	_banner_tween = null
 
 
 ## For tests: is the announcement card showing right now?

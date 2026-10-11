@@ -162,13 +162,25 @@ static func pop_in(c: Control, delay: float = 0.0, from_scale: float = 0.6) -> v
 	if _reduced_motion():
 		c.modulate.a = 1.0
 		return
-	await c.get_tree().process_frame
+	var tree := c.get_tree()
+	await tree.process_frame
+	# The screen may have closed during that frame.
+	if not is_instance_valid(c) or not c.is_inside_tree():
+		return
 	c.pivot_offset = c.size * 0.5
 	c.scale = Vector2.ONE * from_scale
 	c.modulate.a = 0.0
 	var t := c.create_tween().set_parallel(true)
 	t.tween_property(c, "scale", Vector2.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT).set_delay(delay)
 	t.tween_property(c, "modulate:a", 1.0, 0.2).set_delay(delay)
+
+
+## Gives [param c] keyboard/gamepad focus at the end of this frame, if it is
+## still on screen by then.
+static func focus_later(c: Control) -> void:
+	(func() -> void:
+		if is_instance_valid(c) and c.is_inside_tree() and c.is_visible_in_tree():
+			c.grab_focus()).call_deferred()
 
 
 static func _reduced_motion() -> bool:

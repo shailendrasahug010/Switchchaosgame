@@ -234,11 +234,14 @@ func load_game() -> void:
 	if not persist_enabled or not FileAccess.file_exists(save_path):
 		return
 	var text := FileAccess.get_file_as_string(save_path)
-	var parsed: Variant = JSON.parse_string(text)
-	if typeof(parsed) != TYPE_DICTIONARY:
-		push_warning("GameState: save file unreadable, starting fresh.")
+	var json := JSON.new()
+	if json.parse(text) != OK or typeof(json.data) != TYPE_DICTIONARY:
+		# Keep the damaged file next to the new one in case it can be repaired.
+		DirAccess.copy_absolute(ProjectSettings.globalize_path(save_path),
+				ProjectSettings.globalize_path(save_path + ".broken"))
+		push_warning("GameState: save file unreadable (%s), starting fresh." % json.get_error_message())
 		return
-	var data: Dictionary = parsed
+	var data: Dictionary = json.data
 	# Merge so new settings/stats added in later versions get their defaults.
 	for key in (data.get("settings", {}) as Dictionary):
 		if settings.has(key):

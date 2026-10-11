@@ -248,30 +248,31 @@ func _build_center() -> void:
 	_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_banner.visible = false
 	_layer.add_child(_banner)
-	var row := UiKit.hbox(20)
+	var row := UiKit.hbox(18)
 	_banner.add_child(row)
-	_banner_icon = Icon.new(&"star", Color.WHITE, 110)
+	_banner_icon = Icon.new(&"star", Color.WHITE, 88)
 	_banner_icon.shadow = true
 	row.add_child(_banner_icon)
 	var col := UiKit.vbox(0)
-	col.custom_minimum_size.x = 430
+	col.custom_minimum_size.x = 440
 	row.add_child(col)
 	_banner_kicker = UiKit.label("CHAOS SWITCH!", &"HudLabel")
-	_banner_kicker.add_theme_font_size_override("font_size", 24)
+	_banner_kicker.add_theme_font_size_override("font_size", 22)
 	_banner_kicker.add_theme_color_override("font_color", Color("fff3a3"))
 	col.add_child(_banner_kicker)
 	_banner_title = UiKit.label("", &"HudBigLabel")
-	_banner_title.add_theme_font_size_override("font_size", 54)
+	_banner_title.add_theme_font_size_override("font_size", 46)
 	col.add_child(_banner_title)
 	_banner_tagline = UiKit.label("", &"HudLabel")
-	_banner_tagline.add_theme_font_size_override("font_size", 28)
+	_banner_tagline.add_theme_font_size_override("font_size", 25)
 	col.add_child(_banner_tagline)
 	_banner_tip = UiKit.wrap_label("", &"HudLabel")
-	_banner_tip.add_theme_font_size_override("font_size", 22)
-	_banner_tip.custom_minimum_size.x = 430
+	_banner_tip.add_theme_font_size_override("font_size", 20)
+	_banner_tip.custom_minimum_size.x = 440
 	col.add_child(_banner_tip)
 	_banner_count = UiKit.label("3", &"HudHugeLabel", HORIZONTAL_ALIGNMENT_CENTER)
-	_banner_count.custom_minimum_size.x = 110
+	_banner_count.add_theme_font_size_override("font_size", 96)
+	_banner_count.custom_minimum_size.x = 96
 	row.add_child(_banner_count)
 
 	# Mission card shown during the intro.
@@ -309,12 +310,15 @@ func _build_center() -> void:
 	_big_message.add_theme_font_size_override("font_size", 84)
 	_big_message.visible = false
 	_layer.add_child(_big_message)
-	for c: Control in [_banner, _mission_card, _countdown, _big_message]:
+	for c: Control in [_mission_card, _countdown, _big_message]:
 		c.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 		c.grow_horizontal = Control.GROW_DIRECTION_BOTH
 		c.grow_vertical = Control.GROW_DIRECTION_BOTH
-	_banner.offset_top -= 70
-	_banner.offset_bottom -= 70
+	# The chaos card sits high on the screen, over the mission widget, so the
+	# players (kept in the lower part of the view by the camera) stay visible.
+	_banner.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	_banner.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_banner.offset_top = 92
 
 
 func _controls_hint() -> String:

@@ -382,7 +382,7 @@ func get_progress_stats(p_success: bool) -> Dictionary:
 
 func get_camera_targets() -> Array[Dictionary]:
 	var out := super()
-	out.append({"node": cake, "weight": 1.5})
+	out.append({"node": cake, "priority": PartyCamera.Priority.SHOULD, "height": 2.0})
 	return out
 
 

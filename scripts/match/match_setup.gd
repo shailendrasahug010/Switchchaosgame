@@ -16,6 +16,9 @@ class Slot:
 	var paint_id: StringName = &"classic"
 	## For CPU slots: 0.0 (sleepy) .. 1.0 (sharp). Kept modest so kids can win.
 	var bot_skill: float = 0.6
+	## Development aid: a HUMAN slot steered by the CPU brain (screenshots,
+	## soak tests). It still counts as a person for the camera and the HUD.
+	var autopilot: bool = false
 
 	func duplicate_slot() -> Slot:
 		var s := Slot.new()
@@ -25,6 +28,7 @@ class Slot:
 		s.hat_id = hat_id
 		s.paint_id = paint_id
 		s.bot_skill = bot_skill
+		s.autopilot = autopilot
 		return s
 
 

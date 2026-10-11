@@ -8,6 +8,8 @@ extends Node
 ##   --seed=1234            repeatable chaos picks
 ##   --no-chaos             play without rule switches
 ##   --no-progress          don't touch the save file
+##   --autopilot            people's characters are steered by the CPU (demos, screenshots)
+##   --time=45              round length in seconds
 ##   --server [--port=7777] run the online room server (headless)
 
 
@@ -26,6 +28,10 @@ func _ready() -> void:
 		setup.no_progress = args.has("no-progress")
 		if args.has("time"):
 			setup.round_time = float(args.time)
+		if args.has("autopilot"):
+			for s in setup.slots:
+				if s.kind == MatchSetup.Kind.HUMAN:
+					s.autopilot = true
 		Router.start_match.call_deferred(setup)
 	else:
 		Router.go.call_deferred(&"menu", false)

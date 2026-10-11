@@ -44,6 +44,12 @@ func _process(delta: float) -> bool:
 			print("shot saved: ", path)
 			if _frame >= _at.max():
 				quit()
+		# Software rendering is slow: only draw the few frames before each capture.
+		var next_capture := 1 << 30
+		for f in _at:
+			if f > _frame:
+				next_capture = mini(next_capture, f)
+		RenderingServer.render_loop_enabled = next_capture - _frame <= 3
 		return false
 	_frames_left -= 1
 	if _frames_left <= 0 and _elapsed >= _wait:
@@ -123,14 +129,12 @@ func _build_showcase(args: Dictionary) -> Node3D:
 		p.facing = Vector3(0, 0, 1)
 		world.add_child(p)
 		p.setup_look(looks[i][0], looks[i][1], &"classic", Catalog.PLAYER_TAG_COLORS[i], "P%d" % (i + 1))
-		cam.add_target(p, 1.0)
+		cam.add_target(p, PartyCamera.Priority.MUST)
 	cam.look_ahead = Vector3(0, 0, -3.0)
 	if args.has("closeup"):
 		cam.pitch_degrees = -14.0
 		cam.base_distance = 6.0
 		cam.min_distance = 4.0
-		cam.spread_zoom = 0.3
 		cam.look_ahead = Vector3.ZERO
-		cam.target_height = 0.7
 	cam.current = true
 	return world

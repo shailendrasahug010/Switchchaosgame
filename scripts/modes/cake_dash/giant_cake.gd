@@ -15,6 +15,8 @@ signal fell_in_goo
 enum State { LOOSE, CARRIED, DELIVERED }
 
 const MAX_CANDLES := 5
+## The cake model is built at a "normal" size and scaled up to look giant.
+const CAKE_SCALE := 1.25
 ## How hard the carrier's acceleration pushes the wobble.
 const SENSITIVITY := 0.42
 const SPRING := 30.0
@@ -71,8 +73,9 @@ func _rebuild() -> void:
 	_queued = false
 	Gen.clear(self)
 	_candle_flames.clear()
-	Gen.cylinder_shape(self, 0.85, 1.15, Vector3(0, 0.575, 0))
+	Gen.cylinder_shape(self, 0.85 * CAKE_SCALE, 1.15 * CAKE_SCALE, Vector3(0, 0.575 * CAKE_SCALE, 0))
 	_visual = Gen.node(self)
+	_visual.scale = Vector3.ONE * CAKE_SCALE
 	var plate := ToyMaterials.plastic(Color("f2f2ff"))
 	Gen.mesh(_visual, MeshFactory.cylinder(1.0, 0.95, 0.08, 28), plate, Vector3(0, 0.04, 0))
 	var tiers := [[0.85, 0.5, 0.08], [0.62, 0.38, 0.58], [0.4, 0.3, 0.96]]

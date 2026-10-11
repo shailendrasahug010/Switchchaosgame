@@ -132,7 +132,10 @@ func _spawn_players() -> void:
 		p.display_name = label
 		match slot.kind:
 			MatchSetup.Kind.HUMAN:
-				p.input = LocalInputSource.new(slot.local_index)
+				if slot.autopilot:
+					p.input = BotInputSource.new(mode, 0.8, round_seed + 31 * (i + 1))
+				else:
+					p.input = LocalInputSource.new(slot.local_index)
 			MatchSetup.Kind.CPU:
 				cpu_count += 1
 				p.input = BotInputSource.new(mode, slot.bot_skill, round_seed + 97 * (i + 1))

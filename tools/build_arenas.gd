@@ -45,11 +45,11 @@ func build_cake_dash() -> void:
 	root.set("round_time", 90.0)
 	root.set("team_mode", true)
 	root.set("kill_height", -8.0)
-	root.set("camera_pitch", -42.0)
-	root.set("camera_distance", 13.5)
-	root.set("camera_min_distance", 11.0)
-	root.set("camera_max_distance", 20.0)
-	root.set("camera_look_ahead", Vector3(0, 0, -4))
+	root.set("camera_pitch", -40.0)
+	root.set("camera_distance", 11.0)
+	root.set("camera_min_distance", 9.0)
+	root.set("camera_max_distance", 19.0)
+	root.set("camera_look_ahead", Vector3(0, 0, -2))
 
 	var env := ToyEnvironment.new()
 	env.name = "Environment"
@@ -66,11 +66,12 @@ func build_cake_dash() -> void:
 	goo.name = "FrostingSea"
 	goo.size = Vector3(90, 8, 175)
 	goo.position = Vector3(0, -2.6, -56)
+	goo.goo_color = Color("6cc4f0")
 	root.add_child(goo)
 
 	# ---- Bakery (start)
-	BP.block(level, "BakeryFloor", Vector3(0, 0, 0), Vector3(16, 2, 18), Color("e889b5"), Color("ffc4dc"),
-			ToyMaterials.Pattern.CHECKER, Color("ffe3ee"), 0.5)
+	BP.block(level, "BakeryFloor", Vector3(0, 0, 0), Vector3(16, 2, 18), Color("e070a6"), Color("ffa3cd"),
+			ToyMaterials.Pattern.CHECKER, Color("ffd3e8"), 0.5)
 	BP.block(level, "BakeryBackWall", Vector3(0, 0.9, 8.75), Vector3(16, 1.2, 0.5), Color("ff5f7e"), Color("fff8ee"),
 			ToyMaterials.Pattern.STRIPES, Color("ff5f7e"), 1.2)
 	BP.rails(level, "BakeryRail", 9.0, -9.0, 7.75)
@@ -89,7 +90,7 @@ func build_cake_dash() -> void:
 	BP.decor(deco, "Balloons1", Decor.Kind.BALLOONS, Vector3(6.4, 0, 2.5), Color("ff5fa8"))
 
 	# ---- Sprinkle Street (rolling donuts)
-	BP.block(level, "SprinkleStreet", Vector3(0, 0, -24), Vector3(12, 2, 30), Color("d9a65f"), Color("fff0c9"),
+	BP.block(level, "SprinkleStreet", Vector3(0, 0, -24), Vector3(12, 2, 30), Color("c98a45"), Color("f7cf94"),
 			ToyMaterials.Pattern.SPRINKLES, Color.WHITE, 0.35)
 	BP.rails(level, "StreetRail", -9.0, -39.0, 6.0)
 	var r1 := Roller.new()

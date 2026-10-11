@@ -126,14 +126,15 @@ func human_players() -> Array[PlayerCharacter]:
 
 # ---------------------------------------------------------------- camera
 
-## Who the camera keeps in view. Humans matter most; CPU buddies a little.
+## Who the camera keeps in view (see PartyCamera): people on this device are
+## never lost off-screen; CPU buddies are only followed in an all-CPU demo.
+## Modes add their objective (the cake...) with PartyCamera.Priority.SHOULD.
 func get_camera_targets() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
-	var humans := human_players()
+	var any_human := not human_players().is_empty()
 	for p in players:
-		var w := 1.0 if p.is_human else (0.0 if humans.size() > 0 else 1.0)
-		if w > 0.0:
-			out.append({"node": p, "weight": w})
+		var prio := PartyCamera.Priority.MUST if (p.is_human or not any_human) else PartyCamera.Priority.NICE
+		out.append({"node": p, "priority": prio, "height": 2.0})
 	return out
 
 

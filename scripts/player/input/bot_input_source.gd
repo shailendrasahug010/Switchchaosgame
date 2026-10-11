@@ -81,7 +81,9 @@ func update(delta: float, player: Node) -> void:
 		_hesitate = rng.randf_range(0.2, 0.5)
 
 	var throttle := 0.0
-	if dist > stop_distance:
+	if goal.get("no_brake", false):
+		throttle = lerpf(0.9, 1.0, skill)
+	elif dist > stop_distance:
 		throttle = clampf(dist / 2.0, 0.4, 1.0) * lerpf(0.85, 1.0, skill)
 		# On ice, ease off so we don't slide past the goal.
 		if body.stat(&"traction") < 0.5:

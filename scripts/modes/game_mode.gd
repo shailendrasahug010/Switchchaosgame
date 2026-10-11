@@ -194,6 +194,11 @@ func get_result_text(success: bool) -> Dictionary:
 	return {"headline": "Well played!" if success else "Time's up!", "subline": ""}
 
 
+## Big word shown the moment the round ends.
+func get_finish_banner(success: bool) -> String:
+	return "MISSION COMPLETE!" if success else "TIME'S UP!"
+
+
 ## Fun titles handed out on the results screen, best first:
 ## [{stat, title, text}] — the player with the highest [stat] gets the title.
 func get_award_candidates() -> Array[Dictionary]:
@@ -226,6 +231,10 @@ func get_bot_path() -> Array[Node3D]:
 
 ## Follows a course whose finish lies toward -Z. Waypoint metadata:
 ##   jump (bool)      jump when getting close to this point
+##   jump_distance    how close "close" is (default 2.6)
+##   no_pass (bool)   must really be reached (a bounce pad), not just passed
+##   arrive_radius    how close counts as "reached" (default 1.4)
+##   no_brake (bool)  run straight through it at full speed (trampolines)
 ##   ride (NodePath)  board the MovingPlatform when it is here, ride it to the next point
 func path_goal(player: PlayerCharacter, path: Array[Node3D], arrive_radius: float = 1.4) -> Dictionary:
 	if path.is_empty():
@@ -266,14 +275,18 @@ func path_goal(player: PlayerCharacter, path: Array[Node3D], arrive_radius: floa
 					return {"position": next_wp.global_position, "jump": true, "jump_distance": 2.5}
 				return {"position": plat_pos, "stop_distance": 0.5}
 	var flat := Vector2(wp.global_position.x - pos.x, wp.global_position.z - pos.z).length()
-	var passed := pos.z < wp.global_position.z - 0.3
-	if (flat < arrive_radius and absf(wp.global_position.y - pos.y) < 2.0) or passed:
+	var passed: bool = pos.z < wp.global_position.z - 0.3 and not wp.get_meta(&"no_pass", false) \
+			and pos.y > wp.global_position.y - 1.0
+	var arrive := float(wp.get_meta(&"arrive_radius", arrive_radius))
+	if (flat < arrive and absf(wp.global_position.y - pos.y) < 2.0) or passed:
 		idx = mini(idx + 1, path.size() - 1)
 		wp = path[idx]
 	_bot_waypoint[player.player_index] = idx
+	var no_brake: bool = wp.get_meta(&"no_brake", false)
 	return {
 		"position": wp.global_position,
-		"stop_distance": 0.5,
+		"stop_distance": 0.0 if no_brake else 0.5,
+		"no_brake": no_brake,
 		"jump": bool(wp.get_meta(&"jump", false)),
 		"jump_distance": float(wp.get_meta(&"jump_distance", 2.6)),
 	}

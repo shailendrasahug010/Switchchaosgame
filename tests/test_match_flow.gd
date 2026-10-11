@@ -60,6 +60,19 @@ func test_button_mayhem_full_round_with_bots() -> void:
 	await end_scene()
 
 
+func test_bounce_race_full_round_with_bots() -> void:
+	var m := await _play_round(&"bounce_race", 777)
+	if m:
+		var mode := m.mode as BounceRaceMode
+		note("finish order: %s" % str(mode.finish_order))
+		check(mode.finish_order.size() >= 2, "at least two CPU racers reached the finish")
+		if not mode.finish_order.is_empty():
+			var winner := mode.finish_order[0]
+			check(m.score.total(winner) > 0, "the winner scored points")
+			check(int(m.score.get_stat(winner, &"won")) == 1, "the winner got the win stat")
+	await end_scene()
+
+
 func test_restart_creates_fresh_round() -> void:
 	var setup := MatchSetup.quick(&"cake_dash", 1, 3)
 	setup.seed = 99

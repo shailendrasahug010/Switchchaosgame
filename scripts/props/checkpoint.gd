@@ -100,10 +100,32 @@ func has_reached(player_index: int) -> bool:
 	return _reached_by.has(player_index)
 
 
-## A respawn spot just past the arch, spread out a little per player.
+## A respawn spot just past the arch, spread out a little per player. Spots
+## without solid floor under them (an edge, a gap) are skipped, so nobody can
+## respawn straight into the goo.
 func get_respawn_point(player_index: int) -> Vector3:
 	var lateral := (float(player_index) - 1.5) * minf(1.3, width / 5.0)
-	return global_transform * Vector3(lateral, 0.3, -1.6)
+	var candidates: Array[Vector3] = [
+		Vector3(lateral, 0.3, -1.6), Vector3(0, 0.3, -1.6), Vector3(lateral, 0.3, 0.0),
+		Vector3(0, 0.3, 0.0), Vector3(lateral, 0.3, 1.6), Vector3(0, 0.3, 1.6),
+	]
+	for c in candidates:
+		var p := global_transform * c
+		if _floor_under(p):
+			return p
+	return global_transform * Vector3(0, 0.3, 0)
+
+
+func _floor_under(p: Vector3) -> bool:
+	if not is_inside_tree():
+		return true
+	var space := get_world_3d().direct_space_state
+	# The whole player footprint must be over solid floor.
+	for o: Vector3 in [Vector3.ZERO, Vector3(0.5, 0, 0), Vector3(-0.5, 0, 0), Vector3(0, 0, 0.5), Vector3(0, 0, -0.5)]:
+		var q := PhysicsRayQueryParameters3D.create(p + o + Vector3(0, 0.5, 0), p + o + Vector3(0, -1.5, 0), Layers.WORLD)
+		if space.intersect_ray(q).is_empty():
+			return false
+	return true
 
 
 func reset() -> void:

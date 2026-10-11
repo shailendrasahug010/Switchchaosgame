@@ -316,7 +316,12 @@ func award(player_index: int, category: StringName, points: int, reason: String 
 		score.add_stat(player_index, &"chaos_points", points)
 	if world_pos != Vector3.INF and points > 0:
 		var color: Color = Catalog.PLAYER_TAG_COLORS[player_index % 4]
-		fx.floating_text("+%d %s" % [points, reason], world_pos, color.lightened(0.2))
+		# With people playing, CPU buddies' points are shown small and short.
+		var quiet := setup.human_count() > 0 and player_index < players.size() and not players[player_index].is_human
+		if quiet:
+			fx.floating_text("+%d" % points, world_pos, color.lightened(0.2), true)
+		else:
+			fx.floating_text(("+%d %s" % [points, reason]).strip_edges(), world_pos, color.lightened(0.2))
 
 
 func _on_scored(_player_index: int, category: StringName, points: int, _reason: String) -> void:

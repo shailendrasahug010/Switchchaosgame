@@ -53,16 +53,32 @@ func _ready() -> void:
 		_puffs.append(p)
 
 
-func floating_text(text: String, world_pos: Vector3, color: Color = Color.WHITE) -> void:
+## [param small] texts are for less important news (CPU buddies' points).
+## Texts popping up at the same moment and place stack upward instead of
+## piling on top of each other.
+func floating_text(text: String, world_pos: Vector3, color: Color = Color.WHITE, small: bool = false) -> void:
+	var pos := world_pos
+	for k in 6:
+		var blocked := false
+		for j in TEXT_POOL:
+			if _text_age[j] < 0.6 and _texts[j].visible:
+				var d := _text_origin[j] - pos
+				if Vector2(d.x, d.z).length() < 3.0 and absf(d.y) < 0.5:
+					blocked = true
+					break
+		if not blocked:
+			break
+		pos.y += 0.6
 	var i := _next_text
 	_next_text = (_next_text + 1) % TEXT_POOL
 	var l := _texts[i]
 	l.text = text
 	l.modulate = color
-	l.global_position = world_pos
+	l.font_size = 40 if small else 56
+	l.global_position = pos
 	l.visible = true
 	_text_age[i] = 0.0
-	_text_origin[i] = world_pos
+	_text_origin[i] = pos
 
 
 func puff(world_pos: Vector3, color: Color = Color.WHITE, amount_scale: float = 1.0) -> void:

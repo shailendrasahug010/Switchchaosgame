@@ -434,3 +434,232 @@ func build_button_mayhem() -> void:
 	BP.bake_navigation(self, root, [level])
 
 	BP.save(root, "res://scenes/arenas/button_mayhem.tscn")
+
+
+# =====================================================================
+# Bounce Race: start -> Trampoline Lagoon -> Spinner Plaza -> sliding
+# platforms -> Boing Climb -> Hammer Bridge -> slide -> FINISH. Toward -Z.
+# =====================================================================
+
+func build_bounce_race() -> void:
+	var root := _mode_root("res://scripts/modes/bounce_race/bounce_race_mode.gd", "BounceRace")
+	root.set("mode_id", &"bounce_race")
+	root.set("mission_title", "Bounce Race")
+	root.set("mission_text", "Race through the bouncy course. First to the finish wins! Fall in the goo? You pop back at the last flag.")
+	root.set("mission_icon", &"bounce")
+	root.set("round_time", 90.0)
+	root.set("team_mode", false)
+	root.set("kill_height", -6.0)
+	root.set("camera_pitch", -36.0)
+	root.set("camera_distance", 11.5)
+	root.set("camera_min_distance", 9.5)
+	root.set("camera_max_distance", 19.0)
+	root.set("camera_look_ahead", Vector3(0, 0, -4))
+
+	var env := ToyEnvironment.new()
+	env.name = "Environment"
+	env.style = ToyEnvironment.Style.MEADOW
+	root.add_child(env)
+
+	var level := BP.group_node(root, "Level")
+	var obstacles := BP.group_node(root, "Obstacles")
+	var pickups := BP.group_node(root, "Stars")
+	var deco := BP.group_node(root, "Decor")
+	var markers := BP.group_node(root, "Markers")
+
+	var goo := KillZone.new()
+	goo.name = "JellyGoo"
+	goo.size = Vector3(80, 8, 175)
+	goo.position = Vector3(0, -2.5, -68)
+	goo.goo_color = Color("a35cf0")
+	root.add_child(goo)
+
+	# ---- Start
+	BP.block(level, "StartPad", Vector3(0, 0, 2), Vector3(14, 2, 16), Color("3fae6a"), Color("94e3b0"),
+			ToyMaterials.Pattern.CHECKER, Color("c7f5d6"), 0.5)
+	BP.block(level, "StartBackWall", Vector3(0, 0.9, 10.25), Vector3(14, 1.2, 0.5), Color("2fc97a"), Color("fff8ee"),
+			ToyMaterials.Pattern.STRIPES, Color("2fc97a"), 1.2)
+	BP.rails(level, "StartRail", 10.0, -6.0, 7.0, 0.0, Color("2fc97a"))
+	BP.marker(markers, "StartLine", Vector3(0, 0, 6), &"start_line")
+	for i in 4:
+		var x := -3.0 + i * 2.0
+		BP.marker(markers, "Spawn%d" % (i + 1), Vector3(x, 0.05, 7.0 + (0.5 if i in [1, 2] else 0.0)), &"spawn")
+	BP.sign(deco, "RaceSign", "BOUNCE RACE", Vector3(0, 3.4, 10.5), 140, Color("fff3a3"), Color("2fa05e"))
+	BP.decor(deco, "StartBalloons1", Decor.Kind.BALLOONS, Vector3(-6.2, 0, 9.0), Color("ff5fa8"))
+	BP.decor(deco, "StartBalloons2", Decor.Kind.BALLOONS, Vector3(6.2, 0, 9.0), Color("3f9dff"))
+
+	# ---- Trampoline Lagoon (bounce across; the narrow beam is the slow, safe way)
+	var tramps := [Vector3(-1.5, 0, -11), Vector3(1.5, 0, -17.5), Vector3(-1, 0, -24)]
+	for i in tramps.size():
+		var at: Vector3 = tramps[i]
+		BP.block(level, "TrampPost%d" % (i + 1), at, Vector3(5.0, 6, 5.0), Color("e0912e"), Color("ffd98a"))
+		var t := BouncePad.new()
+		t.name = "Trampoline%d" % (i + 1)
+		t.trampoline = true
+		t.radius = 2.0
+		t.launch_speed = 16.0
+		t.color = [Color("ff5fa8"), Color("3f9dff"), Color("ffd23f")][i]
+		t.position = at
+		obstacles.add_child(t)
+		BP.star(pickups, "StarT%d" % (i + 1), at + Vector3(0, 4.3, 0))
+	BP.block(level, "Beam", Vector3(5.5, 0, -18), Vector3(1.4, 0.8, 24.4), Color("ff8fc0"), Color("ffd6e8"))
+	BP.sign(deco, "LagoonSign", "Trampoline Lagoon", Vector3(-8.5, 2.6, -9), 72, Color.WHITE, Color("a35cf0"), 30)
+
+	# ---- Spinner Plaza
+	BP.block(level, "Plaza", Vector3(0, 0, -41), Vector3(16, 2, 22), Color("e6b422"), Color("ffe27a"),
+			ToyMaterials.Pattern.DOTS, Color("fff3c4"), 0.45)
+	BP.rails(level, "PlazaRail", -30.0, -52.0, 8.0, 0.0, Color("ffb35c"))
+	var cp1 := Checkpoint.new()
+	cp1.name = "Checkpoint1"
+	cp1.index = 1
+	cp1.width = 15.0
+	cp1.position = Vector3(0, 0, -31.6)
+	root.add_child(cp1)
+	var spinner := Spinner.new()
+	spinner.name = "BigSpinner"
+	spinner.position = Vector3(0, 0, -41.5)
+	spinner.arm_length = 7.4
+	spinner.degrees_per_second = 62.0
+	spinner.color = Color("ff5fa8")
+	obstacles.add_child(spinner)
+	for side: float in [-1.0, 1.0]:
+		var pad := BouncePad.new()
+		pad.name = "PlazaPad%s" % ("L" if side < 0 else "R")
+		pad.position = Vector3(side * 6.0, 0, -36.0 if side < 0 else -47.0)
+		pad.launch_speed = 15.0
+		obstacles.add_child(pad)
+		BP.star(pickups, "StarP%s" % ("L" if side < 0 else "R"), pad.position + Vector3(0, 4.3, 0))
+	var cp2 := Checkpoint.new()
+	cp2.name = "Checkpoint2"
+	cp2.index = 2
+	cp2.width = 15.0
+	cp2.color = Color("3f9dff")
+	cp2.position = Vector3(0, 0, -48.6)
+	root.add_child(cp2)
+	BP.sign(deco, "PlazaSign", "Spinner Plaza", Vector3(9.0, 2.6, -33), 72, Color.WHITE, Color("e0912e"), -30)
+
+	# ---- Sliding platforms over the goo (always covering the middle lane)
+	var plat_z := [-55.4, -60.6, -65.8, -71.0]
+	var plat_cols := [Color("7fd6ff"), Color("ffd27f"), Color("b39bff"), Color("7dffb0")]
+	for i in plat_z.size():
+		var mp := MovingPlatform.new()
+		mp.name = "Slider%d" % (i + 1)
+		var from_x := -2.0 if i % 2 == 0 else 2.0
+		mp.position = Vector3(from_x, 0, plat_z[i])
+		mp.size = Vector3(6, 0.6, 3.6)
+		mp.travel = Vector3(-2.0 * from_x, 0, 0)
+		mp.period = 3.8 + i * 0.4
+		mp.phase = i * 0.25
+		mp.hold = 0.1
+		mp.color = plat_cols[i]
+		obstacles.add_child(mp)
+	BP.star(pickups, "StarS1", Vector3(0, 1.7, -58.0))
+	BP.star(pickups, "StarS2", Vector3(0, 1.7, -68.4))
+	BP.sign(deco, "SliderSign", "Slidey Platforms", Vector3(-9.0, 2.0, -56), 64, Color.WHITE, Color("3f9dff"), 30)
+
+	# ---- Boing Climb: bounce pads up two big steps
+	var climb := Color("f08a5d")
+	BP.block(level, "ClimbBase", Vector3(0, 0, -79.95), Vector3(14, 2, 11.1), climb, Color("ffc2a3"),
+			ToyMaterials.Pattern.STRIPES, Color("ffe0d0"), 0.6)
+	BP.rails(level, "ClimbRail", -74.4, -85.5, 7.0, 0.0, Color("ff8a4c"))
+	var cp3 := Checkpoint.new()
+	cp3.name = "Checkpoint3"
+	cp3.index = 3
+	cp3.width = 13.0
+	cp3.color = Color("ffb35c")
+	cp3.position = Vector3(0, 0, -76.0)
+	root.add_child(cp3)
+	BP.block(level, "Step1", Vector3(0, 3, -90), Vector3(14, 5, 9), climb, Color("ffc2a3"),
+			ToyMaterials.Pattern.STRIPES, Color("ffe0d0"), 0.6)
+	BP.block(level, "Step2", Vector3(0, 6, -98), Vector3(14, 8, 7), climb, Color("ffc2a3"),
+			ToyMaterials.Pattern.STRIPES, Color("ffe0d0"), 0.6)
+	BP.rails(level, "Step1Rail", -85.5, -94.5, 7.0, 3.0, Color("ff8a4c"))
+	BP.rails(level, "Step2Rail", -94.5, -101.5, 7.0, 6.0, Color("ff8a4c"))
+	for x: float in [-4.0, 0.0, 4.0]:
+		for level_y: float in [0.0, 3.0]:
+			var pad := BouncePad.new()
+			pad.name = "ClimbPad%d%s" % [int(level_y), ("L" if x < 0 else ("M" if x == 0 else "R"))]
+			pad.position = Vector3(x, level_y, -82.6 if level_y == 0.0 else -91.6)
+			pad.launch_speed = 15.5
+			pad.color = Color("ffd23f") if level_y == 0.0 else Color("ff5fa8")
+			obstacles.add_child(pad)
+	var cp4 := Checkpoint.new()
+	cp4.name = "Checkpoint4"
+	cp4.index = 4
+	cp4.width = 13.0
+	cp4.color = Color("a77bff")
+	cp4.position = Vector3(0, 6, -96.5)
+	root.add_child(cp4)
+	BP.star(pickups, "StarC1", Vector3(-6, 4.2, -88))
+	BP.star(pickups, "StarC2", Vector3(6, 7.2, -98))
+	BP.sign(deco, "ClimbSign", "Boing Climb", Vector3(-8.5, 3.6, -80), 72, Color.WHITE, Color("f08a5d"), 30)
+
+	# ---- Hammer Bridge (high up!)
+	BP.block(level, "Bridge", Vector3(0, 6, -110.25), Vector3(5, 1.2, 17.5), Color("e8559a"), Color("ffc4dc"),
+			ToyMaterials.Pattern.STRIPES, Color("ffe3ee"), 0.8)
+	for i in 2:
+		var z := -106.0 - i * 8.0
+		var pend := Pendulum.new()
+		pend.name = "Hammer%d" % (i + 1)
+		pend.position = Vector3(0, 6, z)
+		pend.frame_width = 7.0
+		pend.period = 3.0 + i * 0.4
+		pend.phase = 0.5 * i
+		pend.color = Color("ff5fa8") if i == 0 else Color("a77bff")
+		obstacles.add_child(pend)
+		for side: float in [-1.0, 1.0]:
+			BP.block(level, "HammerPost%d%s" % [i, "L" if side < 0 else "R"], Vector3(side * 3.5, 6, z),
+					Vector3(1.2, 8, 1.2), Color("fff8ee"), Color("ffd6e8"))
+	BP.star(pickups, "StarB", Vector3(0, 7.3, -110))
+	BP.sign(deco, "BridgeSign", "Hammer Bridge", Vector3(6.5, 8.6, -104), 72, Color.WHITE, Color("e8559a"), -30)
+
+	# ---- Slide down to the finish
+	BP.ramp(level, "Slide", Vector3(0, 6, -119.0), Vector3(0, 0, -129.0), 6.0, Color("ff5fa8"), Color("ffc4dc"),
+			ToyMaterials.Pattern.STRIPES, Color("ffe3ee"))
+	BP.block(level, "FinishPad", Vector3(0, 0, -136), Vector3(16, 2, 14), Color("e0912e"), Color("ffd98a"),
+			ToyMaterials.Pattern.CHECKER, Color("fff0c4"), 0.5)
+	BP.rails(level, "FinishRail", -129.0, -143.0, 8.0, 0.0, Color("ffb35c"))
+	BP.block(level, "FinishBackWall", Vector3(0, 0.9, -143.25), Vector3(16, 1.2, 0.5), Color("ffb35c"), Color("fff8ee"),
+			ToyMaterials.Pattern.STRIPES, Color("ffb35c"), 1.2)
+	var finish := FinishZone.new()
+	finish.name = "FinishLine"
+	finish.position = Vector3(0, 0, -133)
+	finish.size = Vector3(15, 4, 3)
+	finish.label = "FINISH!"
+	finish.color = Color("ff5fa8")
+	root.add_child(finish)
+	BP.block(deco, "Podium1", Vector3(0, 1.2, -140), Vector3(2.4, 1.2, 2.4), Color("ffd23f"), Color("fff3a3"))
+	BP.block(deco, "Podium2", Vector3(-2.6, 0.8, -140), Vector3(2.4, 0.8, 2.4), Color("c9c9dc"), Color("eeeef8"))
+	BP.block(deco, "Podium3", Vector3(2.6, 0.5, -140), Vector3(2.4, 0.5, 2.4), Color("e0912e"), Color("ffd98a"))
+	BP.decor(deco, "FinishBalloons1", Decor.Kind.BALLOONS, Vector3(-6.5, 0, -141), Color("ffd23f"))
+	BP.decor(deco, "FinishBalloons2", Decor.Kind.BALLOONS, Vector3(6.5, 0, -141), Color("ff5fa8"))
+
+	# ---- CPU racers follow these points (jump = take off before a gap)
+	var path := [
+		[Vector3(0, 0, 3), {}],
+		[Vector3(-1.5, 0, -4.5), {}],
+		[Vector3(-1.5, 0, -11), {"jump": true, "jump_distance": 5.0, "no_brake": true, "arrive_radius": 2.0}],
+		[Vector3(1.5, 0, -17.5), {"no_brake": true, "arrive_radius": 2.0}],
+		[Vector3(-1, 0, -24), {"no_brake": true, "arrive_radius": 2.0}],
+		[Vector3(0, 0, -34), {}],
+		[Vector3(2.5, 0, -41.5), {}],
+		[Vector3(0, 0, -50.2), {}],
+		[Vector3(0, 0, -55.4), {"jump": true, "jump_distance": 3.8}],
+		[Vector3(0, 0, -60.6), {"jump": true, "jump_distance": 3.8}],
+		[Vector3(0, 0, -65.8), {"jump": true, "jump_distance": 3.8}],
+		[Vector3(0, 0, -71.0), {"jump": true, "jump_distance": 3.8}],
+		[Vector3(0, 0, -77.0), {"jump": true, "jump_distance": 4.6}],
+		[Vector3(0, 0, -82.6), {"no_pass": true}],
+		[Vector3(0, 3, -88.5), {}],
+		[Vector3(0, 3, -91.6), {"no_pass": true}],
+		[Vector3(0, 6, -97.5), {}],
+		[Vector3(0, 6, -103), {}],
+		[Vector3(0, 6, -110), {}],
+		[Vector3(0, 6, -117.5), {}],
+		[Vector3(0, 3, -124), {}],
+		[Vector3(0, 0, -133.5), {}],
+	]
+	for i in path.size():
+		BP.marker(markers, "Path%02d" % (i + 1), path[i][0], &"bot_path", path[i][1])
+
+	BP.save(root, "res://scenes/arenas/bounce_race.tscn")

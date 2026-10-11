@@ -461,7 +461,7 @@ func _on_phase_changed(phase: MatchController.Phase) -> void:
 		MatchController.Phase.FINISHED:
 			_hide_banner()
 			_countdown.visible = false
-			_big_message.text = "MISSION COMPLETE!" if match_ctl.success else "TIME'S UP!"
+			_big_message.text = match_ctl.mode.get_finish_banner(match_ctl.success)
 			_big_message.add_theme_color_override("font_color", Color("7dffb0") if match_ctl.success else Color("ffd23f"))
 			_big_message.visible = true
 			UiKit.pop_in(_big_message)

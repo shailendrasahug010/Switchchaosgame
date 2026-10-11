@@ -129,7 +129,7 @@ func _points_by_priority() -> Dictionary:
 		var node: Node3D = t.node
 		if not is_instance_valid(node) or not node.is_inside_tree() or not node.visible:
 			continue
-		if node.get("is_respawning") == true:
+		if node.get("is_respawning") == true or node.get_meta(&"camera_ignore", false):
 			continue
 		var p := node.get_global_transform_interpolated().origin
 		var list: Array = out[int(t.priority)]

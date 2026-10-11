@@ -3,6 +3,8 @@ extends RefCounted
 ## Everything needed to start a round: the mode, who is playing and the rules.
 ## Built by the setup screens (or by tests) and read by MatchController.
 
+## HUMAN: plays on this device. CPU: a CPU buddy run by this device.
+## REMOTE: online only, someone (or a CPU buddy) run by another device.
 enum Kind { HUMAN, CPU, REMOTE }
 
 
@@ -19,6 +21,8 @@ class Slot:
 	## Development aid: a HUMAN slot steered by the CPU brain (screenshots,
 	## soak tests). It still counts as a person for the camera and the HUD.
 	var autopilot: bool = false
+	## Online phones: this REMOTE slot is a CPU buddy run by the room server.
+	var remote_cpu: bool = false
 
 	func duplicate_slot() -> Slot:
 		var s := Slot.new()
@@ -29,6 +33,7 @@ class Slot:
 		s.paint_id = paint_id
 		s.bot_skill = bot_skill
 		s.autopilot = autopilot
+		s.remote_cpu = remote_cpu
 		return s
 
 
@@ -48,6 +53,8 @@ var no_progress: bool = false
 ## Optional list of modes to play in order ("Chaos Party").
 var playlist: Array[StringName] = []
 var playlist_index: int = 0
+## An online room round (seats are labelled P1-P4 the same on every device).
+var online: bool = false
 
 
 func human_count() -> int:
@@ -75,6 +82,7 @@ func duplicate_setup() -> MatchSetup:
 	m.playlist = playlist.duplicate()
 	m.playlist_index = playlist_index
 	m.no_progress = no_progress
+	m.online = online
 	return m
 
 

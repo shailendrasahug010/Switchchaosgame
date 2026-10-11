@@ -105,16 +105,16 @@ func progress_at(t: float) -> float:
 func local_time() -> float:
 	if _frozen:
 		return _frozen_since - _frozen_total
-	return MatchClock.time - _frozen_total
+	return MatchClock.now(self) - _frozen_total
 
 
 func set_frozen(value: bool) -> void:
 	if value == _frozen:
 		return
 	if value:
-		_frozen_since = MatchClock.time
+		_frozen_since = MatchClock.now(self)
 	else:
-		_frozen_total += MatchClock.time - _frozen_since
+		_frozen_total += MatchClock.now(self) - _frozen_since
 	_frozen = value
 
 

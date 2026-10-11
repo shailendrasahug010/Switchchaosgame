@@ -11,12 +11,24 @@ extends Node
 ##   --autopilot            people's characters are steered by the CPU (demos, screenshots)
 ##   --time=45              round length in seconds
 ##   --server [--port=7777] run the online room server (headless)
+##            [--max-rooms=200] [--round-time=SECONDS] (shorter rounds for tests)
+##            [--stop-file=PATH] (tests: quit cleanly once that file exists)
 
 
 func _ready() -> void:
 	var args := parse_args()
 	if args.has("server"):
-		Net.start_server(int(args.get("port", Net.DEFAULT_PORT)))
+		Net.round_time_override = float(args.get("round-time", "0"))
+		Net.stop_file = String(args.get("stop-file", ""))
+		var err := Net.start_server(int(args.get("port", Net.DEFAULT_PORT)), int(args.get("max-rooms", "200")))
+		if err != OK:
+			get_tree().quit(1)
+		return
+	if args.has("net-test"):
+		# Development: an automatic online phone (see tools/net_sync_test.gd).
+		var driver: Node = load("res://scripts/net/net_test_driver.gd").new()
+		driver.set("args", args)
+		get_tree().root.add_child.call_deferred(driver)
 		return
 	if args.has("quick"):
 		var setup := MatchSetup.quick(StringName(args.quick), int(args.get("humans", "1")),

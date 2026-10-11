@@ -121,3 +121,44 @@ func get_stat(player_index: int, key: StringName) -> float:
 
 func get_log() -> Array[Dictionary]:
 	return _log.duplicate()
+
+
+# ---------------------------------------------------------------- online
+
+## Points and stats as plain data (the room server sends this with the results).
+func export_data() -> Dictionary:
+	var points := []
+	var stats := []
+	for i in _points.size():
+		var p := {}
+		for c in CATEGORIES:
+			p[String(c)] = int(_points[i][c])
+		points.append(p)
+		var s := {}
+		for key: StringName in _stats[i]:
+			s[String(key)] = float(_stats[i][key])
+		stats.append(s)
+	return {"points": points, "stats": stats}
+
+
+## Replaces points and stats with [method export_data] from the server.
+## Values are checked: unknown categories are ignored, nothing below zero.
+func import_data(data: Dictionary) -> void:
+	var points = data.get("points")
+	var stats = data.get("stats")
+	if typeof(points) != TYPE_ARRAY or typeof(stats) != TYPE_ARRAY:
+		return
+	for i in mini(_points.size(), (points as Array).size()):
+		if typeof(points[i]) != TYPE_DICTIONARY:
+			continue
+		for c in CATEGORIES:
+			_points[i][c] = maxi(0, int(points[i].get(String(c), 0)))
+	for i in mini(_stats.size(), (stats as Array).size()):
+		if typeof(stats[i]) != TYPE_DICTIONARY:
+			continue
+		var clean := {}
+		for key in stats[i]:
+			var v = stats[i][key]
+			if typeof(v) in [TYPE_FLOAT, TYPE_INT]:
+				clean[StringName(str(key))] = float(v)
+		_stats[i] = clean

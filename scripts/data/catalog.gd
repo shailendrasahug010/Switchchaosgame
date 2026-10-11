@@ -60,19 +60,19 @@ const MODES: Array[Dictionary] = [
 		"id": &"cake_dash", "name": "Cake Dash",
 		"scene": "res://scenes/arenas/cake_dash.tscn",
 		"blurb": "Carry the giant birthday cake to the party. Don't let it go SPLAT!",
-		"color": Color(1.0, 0.56, 0.76), "team": true,
+		"color": Color(1.0, 0.56, 0.76), "team": true, "online": true,
 	},
 	{
 		"id": &"button_mayhem", "name": "Button Mayhem",
 		"scene": "res://scenes/arenas/button_mayhem.tscn",
 		"blurb": "Press the colored buttons in the right order. Some of them run away!",
-		"color": Color(0.36, 0.74, 1.0), "team": true,
+		"color": Color(0.36, 0.74, 1.0), "team": true, "online": true,
 	},
 	{
 		"id": &"bounce_race", "name": "Bounce Race",
 		"scene": "res://scenes/arenas/bounce_race.tscn",
 		"blurb": "Boing over trampolines and spinners. First to the finish wins!",
-		"color": Color(0.49, 0.88, 0.45), "team": false,
+		"color": Color(0.49, 0.88, 0.45), "team": false, "online": true,
 	},
 ]
 

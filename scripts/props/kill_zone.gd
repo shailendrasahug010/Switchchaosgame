@@ -61,7 +61,8 @@ func _process(delta: float) -> void:
 func _on_body_entered(body: Node3D) -> void:
 	if body is PlayerCharacter:
 		var player := body as PlayerCharacter
-		if not player.is_respawning:
+		# Online, puppets and proxies fall on their own device (it reports back).
+		if not player.is_respawning and player.is_simulated():
 			player.respawn_now()
 	elif body.has_method("fell_in"):
 		body.fell_in()

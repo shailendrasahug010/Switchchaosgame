@@ -40,11 +40,15 @@ var tilt: Vector2 = Vector2.ZERO
 var tilt_velocity: Vector2 = Vector2.ZERO
 var last_carrier_index: int = -1
 var last_drop_time: float = -100.0
+## Online phones: this copy is never simulated, it shows the server's cake.
+var net_puppet: bool = false
 
 var _visual: Node3D
 var _candle_flames: Array[Node3D] = []
 var _last_carrier_velocity: Vector3 = Vector3.ZERO
 var _queued := false
+var _net_target := Transform3D.IDENTITY
+var _net_has_target := false
 
 
 func _ready() -> void:
@@ -274,3 +278,82 @@ func deliver_to(spot: Vector3) -> void:
 
 func wobble_amount() -> float:
 	return clampf(tilt.length(), 0.0, 1.0)
+
+
+# ---------------------------------------------------------------- online
+
+## Room server: what the phones need to show the cake.
+func get_net_state() -> Dictionary:
+	var helper_ids := PackedInt32Array()
+	for h in helpers:
+		helper_ids.append(h.player_index)
+	var q := global_transform.basis.get_rotation_quaternion()
+	var p := global_position
+	return {
+		"s": int(state), "c": carrier.player_index if carrier else -1, "h": helper_ids,
+		"x": PackedFloat32Array([p.x, p.y, p.z, q.x, q.y, q.z, q.w]),
+		"t": PackedFloat32Array([tilt.x, tilt.y]), "n": candles,
+	}
+
+
+## Phone: shows the server's cake. [param players] maps indices to creatures.
+func apply_net_state(d: Dictionary, players: Array[PlayerCharacter]) -> void:
+	if not net_puppet:
+		net_puppet = true
+		freeze_mode = RigidBody3D.FREEZE_MODE_KINEMATIC
+		freeze = true
+		# Not solid here: the server's cake is the real one, and it gets
+		# nudged when creatures run into it there.
+		collision_layer = 0
+		collision_mask = 0
+	var n := clampi(int(d.get("n", candles)), 0, MAX_CANDLES)
+	if n != candles:
+		candles = n
+		_refresh_candles()
+	var by_index := func(i: int) -> PlayerCharacter:
+		for pl in players:
+			if pl.player_index == i:
+				return pl
+		return null
+	var new_state := clampi(int(d.get("s", int(state))), 0, State.size() - 1) as State
+	var new_carrier: PlayerCharacter = by_index.call(int(d.get("c", -1))) if new_state == State.CARRIED else null
+	var new_helpers: Array[PlayerCharacter] = []
+	var h = d.get("h")
+	if typeof(h) == TYPE_PACKED_INT32_ARRAY and new_state == State.CARRIED:
+		for i: int in h:
+			var pl: PlayerCharacter = by_index.call(i)
+			if pl and pl != new_carrier and not new_helpers.has(pl):
+				new_helpers.append(pl)
+	for pl in players:
+		var holding := pl == new_carrier or new_helpers.has(pl)
+		var was_holding := pl == carrier or helpers.has(pl)
+		if holding != was_holding:
+			pl.visual.set_carrying(holding)
+			if not holding:
+				pl.visual.set_struggling(false)
+	state = new_state
+	carrier = new_carrier
+	helpers = new_helpers
+	var t = d.get("t")
+	if typeof(t) == TYPE_PACKED_FLOAT32_ARRAY and (t as PackedFloat32Array).size() == 2:
+		tilt = Vector2(t[0], t[1])
+	var x = d.get("x")
+	if typeof(x) == TYPE_PACKED_FLOAT32_ARRAY and (x as PackedFloat32Array).size() == 7:
+		var q := Quaternion(x[3], x[4], x[5], x[6])
+		if q.is_normalized():
+			_net_target = Transform3D(Basis(q), Vector3(x[0], x[1], x[2]))
+			if not _net_has_target or (state != State.CARRIED and global_position.distance_to(_net_target.origin) > 4.0):
+				global_transform = _net_target
+				reset_physics_interpolation()
+			_net_has_target = true
+
+
+## Phone, every tick: follow the carrier, or glide to the server's spot.
+func net_process(delta: float) -> void:
+	if state == State.CARRIED and carrier:
+		_follow_carrier()
+		carrier.visual.set_struggling(tilt.length() > 0.6)
+	elif _net_has_target:
+		global_transform = global_transform.interpolate_with(_net_target, clampf(delta * 12.0, 0.0, 1.0))
+		if _visual:
+			_visual.rotation = Vector3.ZERO

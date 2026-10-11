@@ -91,6 +91,17 @@ func show_results(r: Dictionary) -> void:
 	# Buttons
 	var brow := UiKit.hbox(16, BoxContainer.ALIGNMENT_CENTER)
 	col.add_child(brow)
+	if bool(r.get("online", false)):
+		# Online the host starts the next round from the room screen.
+		var room := UiKit.icon_button("Back to the room", &"next", &"GreenButton", 84)
+		room.pressed.connect(func() -> void: match_ctl.back_to_room())
+		brow.add_child(room)
+		var leave := UiKit.icon_button("Leave room", &"back", &"PinkButton", 84)
+		leave.pressed.connect(func() -> void: match_ctl.quit_to_menu())
+		brow.add_child(leave)
+		_buttons = [room, leave]
+		UiKit.focus_later(room)
+		return
 	var again := UiKit.icon_button("Play again", &"restart", &"GreenButton", 84)
 	again.pressed.connect(func() -> void: match_ctl.restart_round())
 	brow.add_child(again)

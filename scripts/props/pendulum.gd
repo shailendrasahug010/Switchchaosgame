@@ -86,11 +86,11 @@ func _angle_at(t: float) -> float:
 
 func _apply_angle() -> void:
 	if _pivot:
-		var t := MatchClock.time if Gen.in_game() else period * 0.25
+		var t := MatchClock.now(self) if Gen.in_game() else period * 0.25
 		_pivot.rotation.z = _angle_at(t)
 
 
 func _push_dir(_player: PlayerCharacter) -> Vector3:
-	var swing_speed := cos(TAU * (MatchClock.time / period + phase))
+	var swing_speed := cos(TAU * (MatchClock.now(self) / period + phase))
 	var dir := global_transform.basis.x * signf(swing_speed if absf(swing_speed) > 0.05 else 1.0)
 	return dir

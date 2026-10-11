@@ -57,7 +57,8 @@ func on_players_spawned(p_players: Array[PlayerCharacter]) -> void:
 	for p in players:
 		_best_progress[p.player_index] = 0.0
 		p.fell_out.connect(func() -> void:
-			_fell_since_checkpoint[p.player_index] = true
+			if is_authority():
+				_fell_since_checkpoint[p.player_index] = true
 			reset_bot_path(p))
 		p.bounced.connect(func(_s: float) -> void: stat(p, &"bounces"))
 
@@ -97,10 +98,10 @@ func mode_physics_process(_delta: float) -> void:
 	for p in players:
 		if not p.is_respawning:
 			_best_progress[p.player_index] = maxf(best_progress_of(p), progress_of(p))
-	if _pending_tip_at > 0.0 and MatchClock.time >= _pending_tip_at:
+	if _pending_tip_at > 0.0 and MatchClock.now(self) >= _pending_tip_at:
 		_pending_tip_at = -1.0
 		message(_pending_tip, Color("fff3a3"), 2.4)
-	if _end_queued_at > 0.0 and MatchClock.time >= _end_queued_at:
+	if _end_queued_at > 0.0 and MatchClock.now(self) >= _end_queued_at:
 		_end_queued_at = -1.0
 		finish(_someone_who_counts_finished())
 
@@ -118,8 +119,14 @@ func _someone_who_counts_finished() -> bool:
 # ---------------------------------------------------------------- events
 
 func _on_checkpoint(p: PlayerCharacter, cp: Checkpoint) -> void:
+	if not is_authority():
+		# Online phone: our own creature remembers the spot right away; the
+		# server confirms it (and gives the points).
+		if p.is_simulated():
+			p.respawn_position = cp.get_respawn_point(p.player_index)
+		return
 	p.respawn_position = cp.get_respawn_point(p.player_index)
-	AudioManager.play(&"checkpoint")
+	sfx(&"checkpoint")
 	award(p, ScoreKeeper.OBJECTIVE, 25, "Checkpoint!")
 	stat(p, &"checkpoints")
 	if _fell_since_checkpoint.get(p.player_index, false):
@@ -129,17 +136,14 @@ func _on_checkpoint(p: PlayerCharacter, cp: Checkpoint) -> void:
 
 
 func _on_star_touched(p: PlayerCharacter, star: StarPickup) -> void:
-	if not is_playing():
+	if not is_playing() or not is_authority():
 		return
-	star.collect(p)
-	award(p, ScoreKeeper.STARS, star.points, "Star!")
-	stat(p, &"stars")
-	AudioManager.play(&"star")
+	collect_star(p, star)
 
 
 func _on_finish_body(body: Node3D) -> void:
 	var p := body as PlayerCharacter
-	if p == null or not is_playing() or has_finished(p) or p.is_respawning:
+	if p == null or not is_playing() or has_finished(p) or p.is_respawning or not is_authority():
 		return
 	finish_order.append(p.player_index)
 	_finish_times[p.player_index] = match_node.elapsed
@@ -160,7 +164,8 @@ func _on_finish_body(body: Node3D) -> void:
 	p.set_meta(&"camera_ignore", true)
 	finish_zone.celebrate()
 	match_node.fx.confetti(p.global_position + Vector3(0, 2.0, 0))
-	AudioManager.play(&"finish_line")
+	sfx(&"finish_line")
+	net_event(&"finished", [p.player_index])
 	if p.is_human:
 		message("%s finished %s!" % [p.display_name, UiKit.ordinal(place)], Color("7dffb0"), 2.4)
 	_check_end()
@@ -168,7 +173,7 @@ func _on_finish_body(body: Node3D) -> void:
 
 func _check_end() -> void:
 	if finish_order.size() >= players.size():
-		_end_queued_at = MatchClock.time + 1.2
+		_end_queued_at = MatchClock.now(self) + 1.2
 		return
 	var people_left := 0
 	for h in human_players():
@@ -193,7 +198,7 @@ func on_time_up() -> void:
 
 
 func _on_chaos_started(ev: ChaosEvent) -> void:
-	if not is_playing():
+	if not is_playing() or not is_authority():
 		return
 	var tip := ""
 	match ev.id:
@@ -207,7 +212,51 @@ func _on_chaos_started(ev: ChaosEvent) -> void:
 			tip = "Tiny Mode: little steps, but the bounce pads still launch you high!"
 	if tip != "" and bool(GameState.get_setting("show_tips", true)):
 		_pending_tip = tip
-		_pending_tip_at = MatchClock.time + 2.6
+		_pending_tip_at = MatchClock.now(self) + 2.6
+
+
+# ---------------------------------------------------------------- online
+
+func get_net_state() -> Dictionary:
+	var progress := PackedFloat32Array()
+	var times := PackedFloat32Array()
+	for p in players:
+		progress.append(best_progress_of(p))
+		times.append(float(_finish_times.get(p.player_index, -1.0)))
+	return {"fo": PackedInt32Array(finish_order), "bp": progress, "ft": times, "st": stars_net_state()}
+
+
+func apply_net_state(state: Dictionary) -> void:
+	var order = state.get("fo")
+	if typeof(order) == TYPE_PACKED_INT32_ARRAY:
+		var clean: Array[int] = []
+		for i: int in order:
+			if i >= 0 and i < players.size() and not clean.has(i):
+				clean.append(i)
+		finish_order = clean
+	var progress = state.get("bp")
+	var times = state.get("ft")
+	for p in players:
+		var i := p.player_index
+		if typeof(progress) == TYPE_PACKED_FLOAT32_ARRAY and i < (progress as PackedFloat32Array).size():
+			_best_progress[i] = clampf(progress[i], 0.0, 1.0)
+		if typeof(times) == TYPE_PACKED_FLOAT32_ARRAY and i < (times as PackedFloat32Array).size() and times[i] >= 0.0:
+			_finish_times[i] = times[i]
+		if has_finished(p):
+			p.set_meta(&"camera_ignore", true)
+	apply_stars_net_state(state.get("st"))
+
+
+func apply_net_event(event_name: StringName, args: Array) -> void:
+	if _apply_common_event(event_name, args):
+		return
+	if event_name == &"finished" and args.size() == 1:
+		var p := _player_by_index(int(args[0]))
+		if p:
+			if not finish_order.has(p.player_index):
+				finish_order.append(p.player_index)
+			p.set_meta(&"camera_ignore", true)
+		finish_zone.celebrate()
 
 
 # ---------------------------------------------------------------- HUD & results

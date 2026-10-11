@@ -10,6 +10,14 @@ extends Node3D
 ## A mode never touches the UI directly. It reports through the match
 ## (award points, show messages, finish the round) and exposes data that the
 ## HUD and the results screen read.
+##
+## Online (see docs/ONLINE_MULTIPLAYER_PLAN.md) the room server runs the real
+## rules ([method is_authority] is true there). On the phones the same arena is
+## loaded, but the rules don't run: [method mode_physics_process] is replaced
+## by [method mode_client_process], and the state the HUD needs arrives through
+## [method apply_net_state] and [method apply_net_event]. Sounds and effects
+## go through [method sfx] and the match's MatchFx so the server can forward
+## them to every phone.
 
 ## Ask the HUD to refresh the objective widget.
 signal objective_changed
@@ -42,6 +50,7 @@ var _bot_waypoint: Dictionary = {}   # player_index -> int
 var _bot_ride: Dictionary = {}       # player_index -> bool (riding a platform)
 var _nav_paths: Dictionary = {}      # player_index -> {target, path, index, time}
 var _nav_region: NavigationRegion3D = null
+var _stars_cache: Array[StarPickup] = []
 
 
 # ---------------------------------------------------------------- lifecycle
@@ -85,9 +94,15 @@ func on_round_ended(_success: bool) -> void:
 
 # ---------------------------------------------------------------- helpers for subclasses
 
+## False on an online phone: the room server runs the rules and decides
+## points, finishes and pickups. Local play and the server return true.
+func is_authority() -> bool:
+	return match_node == null or match_node.is_authority()
+
+
 func award(player: PlayerCharacter, category: StringName, points: int, reason: String = "",
 		at: Vector3 = Vector3.INF) -> void:
-	if match_node and player:
+	if match_node and player and is_authority():
 		match_node.award(player.player_index, category, points, reason,
 				player.global_position + Vector3(0, 2.4, 0) if at == Vector3.INF else at)
 
@@ -103,13 +118,119 @@ func message(text: String, color: Color = Color.WHITE, seconds: float = 2.2) -> 
 
 
 func finish(success: bool) -> void:
-	if match_node:
+	if match_node and is_authority():
 		match_node.request_finish(success)
 
 
 func stat(player: PlayerCharacter, key: StringName, amount: float = 1.0) -> void:
-	if match_node and player:
+	if match_node and player and is_authority():
 		match_node.score.add_stat(player.player_index, key, amount)
+
+
+## Plays a sound for everyone (the room server sends it to the phones).
+func sfx(id: StringName, pitch: float = 1.0) -> void:
+	if match_node:
+		match_node.play_sfx(id, pitch)
+
+
+## A short camera shake for everyone.
+func shake(amount: float) -> void:
+	if match_node:
+		match_node.shake_camera(amount)
+
+
+# ---------------------------------------------------------------- online
+
+## Room server: what the phones need to show this mode (sent several times a
+## second). Keep it small: numbers, strings and short arrays.
+func get_net_state() -> Dictionary:
+	return {}
+
+
+## Phone: applies [method get_net_state] from the server.
+func apply_net_state(_state: Dictionary) -> void:
+	pass
+
+
+## Room server: a one-off event for every phone (a star popped, a button buzzed).
+func net_event(event_name: StringName, args: Array = []) -> void:
+	if match_node:
+		match_node.send_mode_event(event_name, args)
+
+
+## Phone: handles [method net_event].
+func apply_net_event(_event_name: StringName, _args: Array) -> void:
+	pass
+
+
+## Phone: runs every physics tick while playing, instead of
+## [method mode_physics_process] (for looks only: hints, arrows...).
+func mode_client_process(_delta: float) -> void:
+	pass
+
+
+## Room server: the player behind [param _player] lost the connection.
+func on_player_away(_player: PlayerCharacter) -> void:
+	pass
+
+
+## Index of [param star] among the mode's stars (for net events), -1 if none.
+func star_index(star: StarPickup) -> int:
+	return _star_list().find(star)
+
+
+## Every star in the arena, in scene order (the same on the server and phones).
+func _star_list() -> Array[StarPickup]:
+	if _stars_cache.is_empty():
+		for n in find_children("*", "StarPickup", true, false):
+			_stars_cache.append(n as StarPickup)
+	return _stars_cache
+
+
+## Stars as a compact "taken by" list for [method get_net_state]
+## (-1 = still there, else the collector's player index).
+func stars_net_state() -> PackedInt32Array:
+	var out := PackedInt32Array()
+	for s in _star_list():
+		out.append(s.collected_by if s.taken else -1)
+	return out
+
+
+func apply_stars_net_state(state: Variant) -> void:
+	if typeof(state) != TYPE_PACKED_INT32_ARRAY:
+		return
+	var stars := _star_list()
+	for i in mini(stars.size(), (state as PackedInt32Array).size()):
+		var by: int = state[i]
+		if by >= 0 and not stars[i].taken:
+			stars[i].collect(_player_by_index(by))
+
+
+## Room server: [param player] picked up [param star] (shared star rules).
+func collect_star(player: PlayerCharacter, star: StarPickup) -> void:
+	star.collect(player)
+	award(player, ScoreKeeper.STARS, star.points, "Star!")
+	stat(player, &"stars")
+	sfx(&"star")
+	net_event(&"star", [star_index(star), player.player_index])
+
+
+func _player_by_index(index: int) -> PlayerCharacter:
+	for p in players:
+		if p.player_index == index:
+			return p
+	return null
+
+
+## Handles the shared events (stars). Subclasses call super() first.
+func _apply_common_event(event_name: StringName, args: Array) -> bool:
+	if event_name == &"star" and args.size() == 2:
+		var stars := _star_list()
+		var i := int(args[0])
+		if i >= 0 and i < stars.size() and not stars[i].taken:
+			stars[i].collect(_player_by_index(int(args[1])))
+		return true
+	return false
 
 
 func is_playing() -> bool:
@@ -330,7 +451,7 @@ func nav_goal(player: PlayerCharacter, target: Vector3, stop_distance: float = 0
 func nav_next_point(player: PlayerCharacter, target: Vector3) -> Dictionary:
 	if not has_navigation() or not is_inside_tree():
 		return {"point": target, "final": true}
-	var now := MatchClock.time
+	var now := MatchClock.now(self)
 	var pos := player.global_position
 	var st: Dictionary = _nav_paths.get(player.player_index, {})
 	if st.is_empty() or (st.target as Vector3).distance_to(target) > 0.8 or now - float(st.time) > 0.75:

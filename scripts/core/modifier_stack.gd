@@ -59,6 +59,32 @@ func clear() -> void:
 	changed.emit()
 
 
+## Plain copy of every source (for sending over the network).
+func to_dict() -> Dictionary:
+	var out := {}
+	for source: StringName in _sources:
+		out[String(source)] = (_sources[source] as Dictionary).duplicate()
+	return out
+
+
+## Replaces all sources with [param data] (from [method to_dict]). Only
+## numbers and booleans are accepted as values.
+func set_all(data: Dictionary) -> void:
+	_sources.clear()
+	for source in data:
+		var mods = data[source]
+		if typeof(mods) != TYPE_DICTIONARY:
+			continue
+		var clean := {}
+		for key in mods:
+			var v = mods[key]
+			if typeof(v) in [TYPE_FLOAT, TYPE_INT, TYPE_BOOL]:
+				clean[StringName(str(key))] = v
+		_sources[StringName(str(source))] = clean
+	version += 1
+	changed.emit()
+
+
 ## Product of every multiplier registered for [param stat] (1.0 when none).
 func mul(stat: StringName) -> float:
 	var result := 1.0

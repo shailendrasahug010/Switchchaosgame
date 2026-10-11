@@ -92,7 +92,7 @@ func _physics_process(_delta: float) -> void:
 
 func _apply_angle() -> void:
 	if _pivot:
-		var t := MatchClock.time if Gen.in_game() else 0.0
+		var t := MatchClock.now(self) if Gen.in_game() else 0.0
 		_pivot.rotation.y = deg_to_rad(start_angle + degrees_per_second * t)
 
 

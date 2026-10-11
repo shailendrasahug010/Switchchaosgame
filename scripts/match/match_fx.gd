@@ -13,6 +13,9 @@ var _text_origin: Array[Vector3] = []
 var _next_text := 0
 var _puffs: Array[CPUParticles3D] = []
 var _next_puff := 0
+## Room server: effects are sent to the phones instead of being shown here.
+## Called as (kind: StringName, args: Array).
+var net_forward: Callable = Callable()
 
 
 func _ready() -> void:
@@ -57,6 +60,9 @@ func _ready() -> void:
 ## Texts popping up at the same moment and place stack upward instead of
 ## piling on top of each other.
 func floating_text(text: String, world_pos: Vector3, color: Color = Color.WHITE, small: bool = false) -> void:
+	if net_forward.is_valid():
+		net_forward.call(&"text", [text, world_pos, color, small])
+		return
 	var pos := world_pos
 	for k in 6:
 		var blocked := false
@@ -82,6 +88,9 @@ func floating_text(text: String, world_pos: Vector3, color: Color = Color.WHITE,
 
 
 func puff(world_pos: Vector3, color: Color = Color.WHITE, amount_scale: float = 1.0) -> void:
+	if net_forward.is_valid():
+		net_forward.call(&"puff", [world_pos, color, amount_scale])
+		return
 	var p := _puffs[_next_puff]
 	_next_puff = (_next_puff + 1) % PUFF_POOL
 	p.global_position = world_pos
@@ -92,6 +101,9 @@ func puff(world_pos: Vector3, color: Color = Color.WHITE, amount_scale: float = 
 
 ## A colorful confetti burst (deliveries, finishes, correct sequences).
 func confetti(world_pos: Vector3) -> void:
+	if net_forward.is_valid():
+		net_forward.call(&"confetti", [world_pos])
+		return
 	for c: Color in [Color("ff5fa8"), Color("ffd23f"), Color("3f9dff"), Color("2fc97a")]:
 		puff(world_pos + Vector3(randf_range(-0.6, 0.6), randf_range(0.0, 0.6), randf_range(-0.6, 0.6)), c, 1.2)
 

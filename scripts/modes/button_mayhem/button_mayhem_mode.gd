@@ -109,7 +109,7 @@ func _new_wave() -> void:
 
 
 func _start_step() -> void:
-	_step_started_at = MatchClock.time
+	_step_started_at = MatchClock.now(self)
 	_hint_shown = false
 	for b: PushButton in buttons.values():
 		b.set_lit(false)
@@ -135,9 +135,9 @@ func total_needed() -> int:
 
 
 func _on_button_pressed(player: PlayerCharacter, button: PushButton, stomped: bool) -> void:
-	if not is_playing() or completed:
+	if not is_playing() or completed or not is_authority():
 		return
-	var now := MatchClock.time
+	var now := MatchClock.now(self)
 	if button.color_id == current_target():
 		_correct_press(player, button, stomped, now)
 	else:
@@ -146,7 +146,8 @@ func _on_button_pressed(player: PlayerCharacter, button: PushButton, stomped: bo
 
 func _correct_press(player: PlayerCharacter, button: PushButton, stomped: bool, now: float) -> void:
 	button.accept()
-	AudioManager.play(&"button_right")
+	sfx(&"button_right")
+	net_event(&"press", [String(button.color_id), true])
 	right_presses += 1
 	_last_pressed = button.color_id
 	stat(player, &"right_presses")
@@ -180,7 +181,7 @@ func _correct_press(player: PlayerCharacter, button: PushButton, stomped: bool, 
 	# Wave complete.
 	award_everyone(ScoreKeeper.OBJECTIVE, 100, "Wave %d done!" % (wave + 1))
 	match_node.fx.confetti(button.global_position + Vector3(0, 2.0, 0))
-	AudioManager.play(&"wave_done")
+	sfx(&"wave_done")
 	wave += 1
 	if wave >= WAVES.size():
 		_complete()
@@ -191,7 +192,8 @@ func _correct_press(player: PlayerCharacter, button: PushButton, stomped: bool, 
 
 func _wrong_press(player: PlayerCharacter, button: PushButton, now: float) -> void:
 	button.reject()
-	AudioManager.play(&"buzzer")
+	sfx(&"buzzer")
+	net_event(&"press", [String(button.color_id), false])
 	stat(player, &"wrong_presses")
 	_last_wrong[player.player_index] = now
 	player.knock(button.global_position, 4.5, 3.5)
@@ -225,13 +227,29 @@ func on_time_up() -> void:
 func mode_physics_process(_delta: float) -> void:
 	if car:
 		car.speed_scale = match_node.chaos.rules.mul(&"speed")
-	var target := current_target()
-	var age := MatchClock.time - _step_started_at
-	var hint := target != &"" and age >= HINT_DELAY
+	var hint := _update_hint()
 	if hint and not _hint_shown:
 		_hint_shown = true
-		var info := Catalog.button_color(target)
+		var info := Catalog.button_color(current_target())
 		message("Hint: follow the arrow to the %s button!" % String(info.name).to_upper(), info.color.lightened(0.3), 2.0)
+	if _pending_tip_at > 0.0 and MatchClock.now(self) >= _pending_tip_at:
+		_pending_tip_at = -1.0
+		message(_pending_tip, Color("fff3a3"), 2.6)
+
+
+## Online phones: the arrow and camera follow the server's sequence.
+func mode_client_process(_delta: float) -> void:
+	if car:
+		car.speed_scale = match_node.chaos.rules.mul(&"speed")
+	_update_hint()
+
+
+## Lights the hinted button (with its arrow) once nobody has found it for a
+## while, and points the camera at it. Returns true while the hint is on.
+func _update_hint() -> bool:
+	var target := current_target()
+	var age := MatchClock.now(self) - _step_started_at
+	var hint := target != &"" and age >= HINT_DELAY
 	for id: StringName in buttons:
 		(buttons[id] as PushButton).set_lit(hint and id == target)
 	# The camera widens to show the hinted button (when it fits).
@@ -240,14 +258,12 @@ func mode_physics_process(_delta: float) -> void:
 		_focus_proxy.visible = true
 	else:
 		_focus_proxy.visible = false
-	if _pending_tip_at > 0.0 and MatchClock.time >= _pending_tip_at:
-		_pending_tip_at = -1.0
-		message(_pending_tip, Color("fff3a3"), 2.6)
+	return hint
 
 
 ## Some rule switches change how buttons can be reached: say so.
 func _on_chaos_started(ev: ChaosEvent) -> void:
-	if not is_playing():
+	if not is_playing() or not is_authority():
 		return
 	var tip := ""
 	match ev.id:
@@ -263,16 +279,72 @@ func _on_chaos_started(ev: ChaosEvent) -> void:
 			tip = "Sticky Mode: the runaway car is stuck in the honey too!"
 	if tip != "" and bool(GameState.get_setting("show_tips", true)):
 		_pending_tip = tip
-		_pending_tip_at = MatchClock.time + 2.6
+		_pending_tip_at = MatchClock.now(self) + 2.6
 
 
 func _on_star_touched(p: PlayerCharacter, star: StarPickup) -> void:
-	if not is_playing():
+	if not is_playing() or not is_authority():
 		return
-	star.collect(p)
-	award(p, ScoreKeeper.STARS, star.points, "Star!")
-	stat(p, &"stars")
-	AudioManager.play(&"star")
+	collect_star(p, star)
+
+
+# ---------------------------------------------------------------- online
+
+func get_net_state() -> Dictionary:
+	var seq := PackedStringArray()
+	for id in sequence:
+		seq.append(String(id))
+	var out := {"sq": seq, "s": step, "w": wave, "rp": right_presses, "c": completed,
+			"t0": _step_started_at, "st": stars_net_state()}
+	if car:
+		out["car"] = car.get_net_state()
+	return out
+
+
+func apply_net_state(state: Dictionary) -> void:
+	var changed := false
+	var seq = state.get("sq")
+	if typeof(seq) == TYPE_PACKED_STRING_ARRAY:
+		var clean: Array[StringName] = []
+		for id: String in seq:
+			if buttons.has(StringName(id)):
+				clean.append(StringName(id))
+		if clean != sequence:
+			sequence = clean
+			changed = true
+	var new_step := clampi(int(state.get("s", step)), 0, sequence.size())
+	var new_wave := clampi(int(state.get("w", wave)), 0, WAVES.size())
+	if new_step != step or new_wave != wave:
+		step = new_step
+		wave = new_wave
+		changed = true
+	right_presses = maxi(0, int(state.get("rp", right_presses)))
+	var done := bool(state.get("c", completed))
+	if done != completed:
+		completed = done
+		changed = true
+	var t0 := float(state.get("t0", _step_started_at))
+	if not is_equal_approx(t0, _step_started_at):
+		_step_started_at = t0
+	if car and state.has("car"):
+		car.apply_net_state(state.car)
+	apply_stars_net_state(state.get("st"))
+	if changed:
+		objective_changed.emit()
+
+
+func apply_net_event(event_name: StringName, args: Array) -> void:
+	if _apply_common_event(event_name, args):
+		return
+	if event_name == &"press" and args.size() == 2:
+		var button: PushButton = buttons.get(StringName(str(args[0])))
+		if button == null:
+			return
+		button.play_press()
+		if bool(args[1]):
+			button.accept()
+		else:
+			button.reject()
 
 
 # ---------------------------------------------------------------- HUD & results
@@ -340,7 +412,7 @@ func _update_roles() -> void:
 	var target := current_target()
 	if target == &"":
 		return
-	var age := MatchClock.time - _step_started_at
+	var age := MatchClock.now(self) - _step_started_at
 	var bots: Array[PlayerCharacter] = []
 	for p in players:
 		if p.input is BotInputSource and not p.is_respawning:

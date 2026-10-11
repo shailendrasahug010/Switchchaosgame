@@ -428,7 +428,7 @@ func _process(delta: float) -> void:
 	var facing := Vector3.FORWARD
 	if player:
 		velocity = player.velocity
-		on_floor = player.is_on_floor()
+		on_floor = player.grounded()
 		facing = player.facing
 	var hspeed := Vector2(velocity.x, velocity.z).length()
 	var run := clampf(hspeed / 7.0, 0.0, 1.0)

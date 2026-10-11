@@ -77,14 +77,14 @@ func _offset_at(t: float) -> float:
 func _apply() -> void:
 	if _wheel == null:
 		return
-	var t := MatchClock.time if Gen.in_game() else 0.0
+	var t := MatchClock.now(self) if Gen.in_game() else 0.0
 	var x := _offset_at(t)
 	_wheel.position = Vector3(x, radius, 0)
 	_spin.rotation.z = -x / radius
 
 
 func _push_dir(player: PlayerCharacter) -> Vector3:
-	var t := MatchClock.time
+	var t := MatchClock.now(self)
 	var moving := signf(_offset_at(t + 0.05) - _offset_at(t))
 	var along := global_transform.basis.x * (moving if moving != 0.0 else 1.0)
 	var away := player.global_position - _wheel.global_position

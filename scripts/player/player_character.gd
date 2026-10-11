@@ -18,6 +18,22 @@ signal interact_requested(player: PlayerCharacter)
 ## A funny reaction (surprised, dizzy, happy, oops): the match plays a voice for it.
 signal reacted(kind: StringName)
 
+## Who moves this creature.
+##   SIMULATED: this device runs its physics (local play, your own creature
+##              online, CPU buddies on the room server).
+##   PUPPET:    online client view of someone else: placed from server snapshots.
+##   PROXY:     room server stand-in for a player on a phone: placed from that
+##              phone's (checked) updates. Commands for it are sent to the phone.
+enum NetMode { SIMULATED, PUPPET, PROXY }
+
+## Events a puppet or proxy can replay (see [method net_emit]).
+const NET_JUMPED := 0
+const NET_LANDED := 1
+const NET_BOUNCED := 2
+const NET_KNOCKED := 3
+const NET_FELL := 4
+const NET_RESPAWNED := 5
+
 @export_group("Movement")
 @export var max_speed: float = 7.0
 @export var ground_accel: float = 55.0
@@ -43,7 +59,10 @@ var player_index: int = 0
 var display_name: String = ""
 var character_id: StringName = &"bloop"
 var tag_color: Color = Color.WHITE
+## A person on this device (online phones: only your own creature).
 var is_human: bool = true
+## A CPU buddy (on any device).
+var is_cpu: bool = false
 var input: PlayerInputSource = null
 ## Shared chaos rules for the match. May be null (no chaos).
 var rules: ModifierStack = null
@@ -51,9 +70,23 @@ var rules: ModifierStack = null
 var personal: ModifierStack = ModifierStack.new()
 ## Movement is relative to the camera's yaw so "up" on the stick is "away from camera".
 var camera_yaw: float = 0.0
-var controls_enabled: bool = false
-var respawn_position: Vector3 = Vector3.ZERO
+var controls_enabled: bool = false:
+	set(v):
+		if v == controls_enabled:
+			return
+		controls_enabled = v
+		_net(&"controls", [v])
+var respawn_position: Vector3 = Vector3.ZERO:
+	set(v):
+		respawn_position = v
+		_net(&"respawn_point", [v])
 var kill_y: float = -15.0
+var net_mode: NetMode = NetMode.SIMULATED
+## Set by the room server: receives (player, command, args) for commands that
+## the player's own device has to carry out (knocks, respawns, controls...).
+var net_hook: Callable = Callable()
+## Online client: the pause card is open, so this device ignores its controls.
+var input_muted: bool = false
 ## World-space direction the creature looks towards.
 var facing: Vector3 = Vector3.FORWARD
 var size_scale: float = 1.0
@@ -72,6 +105,8 @@ var _blocked_from_growing: bool = false
 var _room_query: PhysicsShapeQueryParameters3D
 var _room_shape: CapsuleShape3D
 var _standing_time: float = 0.0
+var _net_on_floor: bool = true
+var _net_away: bool = false
 
 @onready var collision: CollisionShape3D = $CollisionShape3D
 @onready var visual: PlayerVisual = $Visual
@@ -94,6 +129,9 @@ func _ready() -> void:
 	_room_query.shape = _room_shape
 	_room_query.collision_mask = Layers.WORLD
 	_apply_size(1.0)
+	personal.changed.connect(func() -> void:
+		if net_mode == NetMode.PROXY:
+			_net(&"personal", [personal.to_dict()]))
 
 
 ## Gives the creature its look. Call before or after adding to the tree.
@@ -138,9 +176,23 @@ func is_stunned() -> bool:
 	return _stun > 0.0
 
 
+## True when this device runs this creature's physics (see [enum NetMode]).
+## Bounce pads, bonkers and goo only act on simulated creatures: a puppet's or
+## proxy's own device already handled the bounce.
+func is_simulated() -> bool:
+	return net_mode == NetMode.SIMULATED
+
+
+## On the floor? (Puppets and proxies get this from the network.)
+func grounded() -> bool:
+	return is_on_floor() if net_mode == NetMode.SIMULATED else _net_on_floor
+
+
 # ---------------------------------------------------------------- physics
 
 func _physics_process(delta: float) -> void:
+	if net_mode != NetMode.SIMULATED:
+		return
 	if is_respawning:
 		_respawn_timer -= delta
 		if _respawn_timer <= 0.0:
@@ -165,7 +217,7 @@ func _physics_process(delta: float) -> void:
 
 	# --- stick -> world direction
 	var stick := Vector2.ZERO
-	if controls_enabled and input:
+	if controls_enabled and input and not input_muted:
 		stick = input.move
 	if is_reversed():
 		stick = -stick
@@ -201,7 +253,7 @@ func _physics_process(delta: float) -> void:
 		_jumping = false
 	else:
 		_coyote -= delta
-	if controls_enabled and input and input.consume_jump():
+	if controls_enabled and input and input.consume_jump() and not input_muted:
 		_jump_buffer = jump_buffer_time
 	else:
 		_jump_buffer -= delta
@@ -218,7 +270,7 @@ func _physics_process(delta: float) -> void:
 		_jumping = false
 
 	# --- interacting
-	if controls_enabled and input and input.consume_interact():
+	if controls_enabled and input and input.consume_interact() and not input_muted:
 		interact_requested.emit(self)
 
 	# --- move
@@ -290,6 +342,11 @@ func _floor_surface_bounce() -> float:
 
 ## Sends the player upward (bounce pads, trampoline floors).
 func launch(up_speed: float, from_pad: bool = true) -> void:
+	if net_mode == NetMode.PROXY:
+		_net(&"launch", [up_speed])
+		return
+	if net_mode == NetMode.PUPPET:
+		return
 	velocity.y = up_speed
 	_jumping = false
 	_coyote = 0.0
@@ -303,6 +360,12 @@ func launch(up_speed: float, from_pad: bool = true) -> void:
 ## A soft bonk from an obstacle: slide away from [param from_point] and get dizzy.
 func knock(from_point: Vector3, strength: float = 8.0, lift: float = 4.5) -> void:
 	if is_respawning:
+		return
+	if net_mode == NetMode.PROXY:
+		# The phone bonks its own creature and reports the knock back.
+		_net(&"knock", [from_point, strength, lift])
+		return
+	if net_mode == NetMode.PUPPET:
 		return
 	var away := global_position - from_point
 	away.y = 0.0
@@ -401,6 +464,8 @@ func _finish_respawn() -> void:
 
 ## Moves instantly (no interpolation smear) and stops all motion.
 func teleport(position_: Vector3, new_facing: Vector3 = Vector3.ZERO) -> void:
+	if net_mode == NetMode.PROXY and is_inside_tree():
+		_net(&"teleport", [position_, new_facing])
 	global_position = position_
 	velocity = Vector3.ZERO
 	_jumping = false
@@ -412,14 +477,95 @@ func teleport(position_: Vector3, new_facing: Vector3 = Vector3.ZERO) -> void:
 
 ## Forces an immediate respawn at the current respawn point (used by modes).
 func respawn_now() -> void:
+	if net_mode == NetMode.PROXY:
+		_net(&"respawn_now", [])
+		return
+	if net_mode == NetMode.PUPPET:
+		return
 	_start_respawn()
 	_respawn_timer = 0.0
 
 
 func celebrate() -> void:
 	visual.play_celebration()
+	_net_show(&"celebrate", [])
 
 
 func react(kind: StringName) -> void:
 	visual.react(kind)
 	reacted.emit(kind)
+	_net_show(&"react", [kind])
+
+
+# ---------------------------------------------------------------- online
+
+## Room server: a command for the phone that owns this proxy.
+func _net(command: StringName, args: Array) -> void:
+	if net_mode == NetMode.PROXY and net_hook.is_valid():
+		net_hook.call(self, command, args)
+
+
+## Room server: something every phone should see (any creature, CPUs included).
+func _net_show(command: StringName, args: Array) -> void:
+	if net_hook.is_valid():
+		net_hook.call(self, command, args)
+
+
+## Places a puppet or proxy. [param flags]: bit 0 = on the floor.
+func net_apply_state(pos: Vector3, vel: Vector3, yaw: float, size: float, flags: int) -> void:
+	global_position = pos
+	velocity = vel
+	facing = Vector3(sin(yaw), 0.0, cos(yaw))
+	_net_on_floor = (flags & 1) != 0
+	size = clampf(size, 0.25, 2.8)
+	if absf(size - size_scale) > 0.002:
+		size_scale = size
+		_apply_size(size)
+
+
+## Yaw angle of [member facing] (what [method net_apply_state] expects).
+func facing_yaw() -> float:
+	return atan2(facing.x, facing.z)
+
+
+## Replays an event that happened on the creature's own device, so the same
+## signals fire here as in local play (scoring, cake wobble, sounds...).
+func net_emit(kind: int, value: Vector3 = Vector3.ZERO) -> void:
+	match kind:
+		NET_JUMPED:
+			visual.on_jump()
+			jumped.emit()
+		NET_LANDED:
+			visual.on_land(value.y)
+			landed.emit(value.y)
+		NET_BOUNCED:
+			visual.on_bounce()
+			bounced.emit(value.y)
+		NET_KNOCKED:
+			if net_mode == NetMode.PUPPET:
+				visual.react(&"dizzy")
+			knocked.emit(value)
+		NET_FELL:
+			if not is_respawning:
+				is_respawning = true
+				visual.visible = false
+				name_tag.visible = false
+				fell_out.emit()
+		NET_RESPAWNED:
+			if is_respawning:
+				is_respawning = false
+				visual.visible = true
+				name_tag.visible = not _net_away
+				visual.on_respawn()
+				respawned.emit()
+
+
+func is_away() -> bool:
+	return _net_away
+
+
+## Online: the player behind this creature lost the connection (or is back).
+func net_set_away(away: bool) -> void:
+	_net_away = away
+	name_tag.text = (display_name + " ...") if away else display_name
+	velocity = Vector3.ZERO

@@ -22,7 +22,14 @@ func setup(p_match: MatchController) -> void:
 	var col := UiKit.vbox(16)
 	col.custom_minimum_size.x = 520
 	_card.add_child(col)
-	col.add_child(UiKit.label("Paused", &"HeaderLabel", HORIZONTAL_ALIGNMENT_CENTER))
+	var online := match_ctl.is_online()
+	# Online the round goes on for everyone else while this card is open.
+	col.add_child(UiKit.label("Taking a break" if online else "Paused", &"HeaderLabel", HORIZONTAL_ALIGNMENT_CENTER))
+	if online:
+		var note := UiKit.wrap_label("The round keeps going for your friends. Your creature waits for you.",
+				&"BodyLabel", HORIZONTAL_ALIGNMENT_CENTER)
+		note.custom_minimum_size.x = 500
+		col.add_child(note)
 	var mode := match_ctl.mode
 	var mission := UiKit.wrap_label("%s: %s" % [mode.mission_title, mode.mission_text], &"BodyLabel",
 			HORIZONTAL_ALIGNMENT_CENTER)
@@ -31,17 +38,18 @@ func setup(p_match: MatchController) -> void:
 	_resume = UiKit.icon_button("Keep playing", &"play", &"GreenButton", 88)
 	_resume.pressed.connect(func() -> void: match_ctl.set_paused(false))
 	col.add_child(_resume)
-	var restart := UiKit.icon_button("Start over", &"restart", &"BlueButton", 80)
-	restart.pressed.connect(func() -> void:
-		match_ctl.set_paused(false)
-		match_ctl.restart_round())
-	col.add_child(restart)
+	if not online:
+		var restart := UiKit.icon_button("Start over", &"restart", &"BlueButton", 80)
+		restart.pressed.connect(func() -> void:
+			match_ctl.set_paused(false)
+			match_ctl.restart_round())
+		col.add_child(restart)
 	_sound = UiKit.icon_button("", &"sound", &"YellowButton", 80, Color("1c1a33"))
 	_sound.pressed.connect(func() -> void:
 		GameState.set_setting("muted", not bool(GameState.get_setting("muted", false)))
 		_refresh_sound())
 	col.add_child(_sound)
-	var quit := UiKit.icon_button("Back to menu", &"back", &"PinkButton", 80)
+	var quit := UiKit.icon_button("Leave the room" if online else "Back to menu", &"back", &"PinkButton", 80)
 	quit.pressed.connect(func() -> void: match_ctl.quit_to_menu())
 	col.add_child(quit)
 	_refresh_sound()

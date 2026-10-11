@@ -50,6 +50,7 @@ func reset_to_defaults() -> void:
 		"debug_tools": OS.is_debug_build(),
 		"show_tips": true,
 		"online_allowed": false,    # a grown-up switches this on (Grown-ups page)
+		"online_server": "127.0.0.1",  # room server address (host or host:port), set by a grown-up
 	}
 	stats = {
 		"rounds_played": 0,

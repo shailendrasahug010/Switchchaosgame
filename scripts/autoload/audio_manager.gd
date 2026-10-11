@@ -26,10 +26,9 @@ var _music_bus := 0
 var recent: Array[StringName] = []
 ## With no sound device at all (headless tests, the online room server) no
 ## streams are loaded or played; hooks are still recorded in [member recent].
+## (The room server sends match sounds to the phones itself, see
+## MatchController.play_sfx.)
 var silent: bool = false
-## Online room server: every sound hook is also handed to this callable
-## (id, pitch, volume_db) so the server can send it to the players' phones.
-var forward: Callable = Callable()
 
 
 func _ready() -> void:
@@ -76,8 +75,6 @@ func play(id: StringName, pitch: float = 1.0, volume_db: float = 0.0) -> bool:
 	recent.append(id)
 	if recent.size() > 32:
 		recent.remove_at(0)
-	if forward.is_valid():
-		forward.call(id, pitch, volume_db)
 	if silent:
 		return has_sound(id)
 	var stream := _get_stream(id)

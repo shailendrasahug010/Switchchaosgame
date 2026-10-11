@@ -40,6 +40,8 @@ var speed_scale: float = 1.0
 var chasers: Array[Node3D] = []
 var state: State = State.CRUISE
 var velocity: Vector3 = Vector3.ZERO
+## Online phones: the room server drives the car; this copy only follows it.
+var net_puppet: bool = false
 
 var _angle := 0.0
 var _state_left := 0.0
@@ -49,6 +51,8 @@ var _wheels: Array[Node3D] = []
 var _sweat: Node3D
 var _time := 0.0
 var _queued := false
+var _net_angle := 0.0
+var _net_has_target := false
 
 
 func _ready() -> void:
@@ -136,6 +140,17 @@ func _physics_process(delta: float) -> void:
 	if not Gen.in_game():
 		return
 	_time += delta
+	if net_puppet:
+		# Keep driving on our own (smooth), and steer toward the server's car.
+		if _net_has_target:
+			_net_angle += direction * current_speed() * delta / maxf(_radius_at(_net_angle), 0.1)
+			var error := _net_angle - _angle
+			if absf(error) > 1.5:
+				_angle = _net_angle
+			else:
+				_angle += error * clampf(delta * 6.0, 0.0, 1.0)
+		_place(delta)
+		return
 	_update_state(delta)
 	_place(delta)
 
@@ -182,12 +197,35 @@ func current_speed() -> float:
 	return s * clampf(speed_scale, 0.2, 2.0)
 
 
+func _radius_at(angle: float) -> float:
+	return Vector2(maxf(loop_radii.x, 0.01) * sin(angle), maxf(loop_radii.y, 0.01) * cos(angle)).length()
+
+
+## Room server: [angle, state] for the phones.
+func get_net_state() -> PackedFloat32Array:
+	return PackedFloat32Array([_angle, float(state)])
+
+
+## Phone: follows the server's car (see [member net_puppet]).
+func apply_net_state(data: Variant) -> void:
+	if typeof(data) != TYPE_PACKED_FLOAT32_ARRAY or (data as PackedFloat32Array).size() < 2:
+		return
+	net_puppet = true
+	_net_angle = data[0]
+	if not _net_has_target:
+		_angle = _net_angle
+		_net_has_target = true
+	var s := clampi(int(data[1]), 0, State.size() - 1) as State
+	if s != state:
+		_set_state(s, 0.0)
+
+
 func _place(delta: float) -> void:
 	var rx := maxf(loop_radii.x, 0.01)
 	var rz := maxf(loop_radii.y, 0.01)
 	# Advance by arc length so the speed is even all around the oval.
-	var local_r := Vector2(rx * sin(_angle), rz * cos(_angle)).length()
-	_angle += direction * current_speed() * delta / maxf(local_r, 0.1)
+	if not net_puppet:
+		_angle += direction * current_speed() * delta / maxf(_radius_at(_angle), 0.1)
 	var parent_xform := Transform3D.IDENTITY
 	if get_parent() is Node3D:
 		parent_xform = (get_parent() as Node3D).global_transform

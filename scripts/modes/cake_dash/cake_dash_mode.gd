@@ -65,7 +65,7 @@ func on_players_spawned(p_players: Array[PlayerCharacter]) -> void:
 
 func on_round_started() -> void:
 	super()
-	_cake_free_since = MatchClock.time
+	_cake_free_since = MatchClock.now(self)
 
 
 # ---------------------------------------------------------------- every tick
@@ -86,7 +86,7 @@ func mode_physics_process(delta: float) -> void:
 func _update_carry(delta: float) -> void:
 	var carrier := cake.carrier
 	if carrier == null or carrier.is_respawning:
-		cake.release(true, MatchClock.time)
+		cake.release(true, MatchClock.now(self))
 		return
 	# Helpers who wandered off let go automatically.
 	for h in cake.helpers.duplicate():
@@ -95,7 +95,7 @@ func _update_carry(delta: float) -> void:
 	var n := cake.helpers.size()
 	var sensitivity := carrier.stat(&"cake_wobble") * pow(0.62, n)
 	if cake.update_carried(delta, sensitivity, 1.6 * n):
-		cake.release(true, MatchClock.time)
+		cake.release(true, MatchClock.now(self))
 		return
 	# Heavy cake: slower alone, back to full speed with friends.
 	var heavy := 0.76 if (match_node.setup.team_carry and players.size() > 1) else 0.92
@@ -155,7 +155,7 @@ func get_interact_prompt(p: PlayerCharacter) -> String:
 			if cake.helpers.has(p):
 				return "LET GO"
 			if p.global_position.distance_to(cake.carrier.global_position) <= HELP_RADIUS:
-				if p.is_human and not cake.carrier.is_human:
+				if not p.is_cpu and cake.carrier.is_cpu:
 					return "TAKE"
 				if cake.helpers.size() < MAX_HELPERS:
 					return "HELP"
@@ -178,10 +178,10 @@ func handle_interact(p: PlayerCharacter) -> void:
 		"GRAB":
 			_grab(p)
 		"PUT DOWN":
-			cake.release(false, MatchClock.time)
+			cake.release(false, MatchClock.now(self))
 			_clear_carry_modifiers()
-			_cake_free_since = MatchClock.time
-			AudioManager.play(&"put_down")
+			_cake_free_since = MatchClock.now(self)
+			sfx(&"put_down")
 		"LET GO":
 			cake.remove_helper(p)
 		"TAKE":
@@ -192,11 +192,11 @@ func handle_interact(p: PlayerCharacter) -> void:
 			old.visual.set_struggling(false)
 			cake.pick_up(p)
 			cake.add_helper(old)
-			AudioManager.play(&"cake_grab")
+			sfx(&"cake_grab")
 		"HELP":
 			cake.add_helper(p)
 			p.react(&"happy")
-			AudioManager.play(&"helper")
+			sfx(&"helper")
 
 
 func _can_grab(p: PlayerCharacter) -> bool:
@@ -206,9 +206,9 @@ func _can_grab(p: PlayerCharacter) -> bool:
 
 func _grab(p: PlayerCharacter) -> void:
 	var dropped_by := cake.last_carrier_index
-	var since_drop := MatchClock.time - cake.last_drop_time
+	var since_drop := MatchClock.now(self) - cake.last_drop_time
 	cake.pick_up(p)
-	AudioManager.play(&"cake_grab")
+	sfx(&"cake_grab")
 	p.react(&"happy")
 	if since_drop < 12.0:
 		if dropped_by == p.player_index:
@@ -223,13 +223,15 @@ func _grab(p: PlayerCharacter) -> void:
 # ---------------------------------------------------------------- events
 
 func _on_player_landed(impact: float, p: PlayerCharacter) -> void:
-	if cake.state != GiantCake.State.CARRIED or cake.carrier != p or impact < 5.5:
+	if not is_authority() or cake.state != GiantCake.State.CARRIED or cake.carrier != p or impact < 5.5:
 		return
 	var steady := pow(0.62, cake.helpers.size())
 	cake.jolt(Vector3(randf_range(-1, 1), 0, randf_range(-1, 1)), (impact - 4.0) * 0.16 * steady * p.stat(&"cake_wobble"))
 
 
 func _on_player_knocked(direction: Vector3, p: PlayerCharacter) -> void:
+	if not is_authority():
+		return
 	if cake.state == GiantCake.State.CARRIED and cake.carrier == p:
 		cake.jolt(direction, 2.4 * pow(0.62, cake.helpers.size()))
 	elif cake.helpers.has(p):
@@ -237,40 +239,53 @@ func _on_player_knocked(direction: Vector3, p: PlayerCharacter) -> void:
 
 
 func _on_player_fell(p: PlayerCharacter) -> void:
+	reset_bot_path(p)
+	if not is_authority():
+		return
 	if cake.state == GiantCake.State.CARRIED and cake.carrier == p:
-		cake.release(true, MatchClock.time)
+		cake.release(true, MatchClock.now(self))
 	elif cake.helpers.has(p):
 		cake.remove_helper(p)
-	reset_bot_path(p)
+
+
+## Online: whoever drops out of the room lets go of the cake.
+func on_player_away(p: PlayerCharacter) -> void:
+	_on_player_fell(p)
 
 
 func _on_cake_dropped(by: PlayerCharacter) -> void:
+	if not is_authority():
+		return
 	_clear_carry_modifiers()
-	_cake_free_since = MatchClock.time
-	AudioManager.play(&"cake_drop")
+	_cake_free_since = MatchClock.now(self)
+	sfx(&"cake_drop")
 	if by:
 		by.react(&"oops")
 	match_node.fx.puff(cake.global_position + Vector3(0, 1.4, 0), Color("ffb13b"))
 	message("Whoops! The cake tumbled! Grab it!", Color("ffd23f"))
-	match_node.camera.shake(0.3)
+	shake(0.3)
 
 
 func _on_cake_goo() -> void:
-	if delivered:
+	if delivered or not is_authority():
 		return
 	if cake.state == GiantCake.State.CARRIED:
-		cake.release(true, MatchClock.time)
+		cake.release(true, MatchClock.now(self))
 	cake.lose_candle()
 	match_node.fx.puff(cake.global_position, Color("ff9ccf"), 1.5)
 	cake.reset_cake(cake_checkpoint_pos + Vector3(0, 0.3, 0))
-	_cake_free_since = MatchClock.time
-	AudioManager.play(&"splat")
+	_cake_free_since = MatchClock.now(self)
+	sfx(&"splat")
 	message("SPLAT! The cake is back at the checkpoint.", Color("ff9ccf"))
 
 
 func _on_checkpoint(p: PlayerCharacter, cp: Checkpoint) -> void:
+	if not is_authority():
+		if p.is_simulated():
+			p.respawn_position = cp.get_respawn_point(p.player_index)
+		return
 	p.respawn_position = cp.get_respawn_point(p.player_index)
-	AudioManager.play(&"checkpoint")
+	sfx(&"checkpoint")
 	var carrying := cake.state == GiantCake.State.CARRIED and (cake.carrier == p)
 	if carrying and not _cake_checkpoints.has(cp.index):
 		_cake_checkpoints[cp.index] = true
@@ -282,16 +297,13 @@ func _on_checkpoint(p: PlayerCharacter, cp: Checkpoint) -> void:
 
 
 func _on_star_touched(p: PlayerCharacter, star: StarPickup) -> void:
-	if not is_playing():
+	if not is_playing() or not is_authority():
 		return
-	star.collect(p)
-	award(p, ScoreKeeper.STARS, star.points, "Star!")
-	stat(p, &"stars")
-	AudioManager.play(&"star")
+	collect_star(p, star)
 
 
 func _on_finish_body(body: Node3D) -> void:
-	if delivered or not is_playing():
+	if delivered or not is_playing() or not is_authority():
 		return
 	if body == cake or (cake.state == GiantCake.State.CARRIED and body == cake.carrier):
 		_deliver()
@@ -306,8 +318,9 @@ func _deliver() -> void:
 	_clear_carry_modifiers()
 	cake.deliver_to(table_spot.global_position if table_spot else finish_zone.global_position)
 	finish_zone.celebrate()
+	net_event(&"delivered")
 	match_node.fx.confetti(finish_zone.global_position + Vector3(0, 2, 0))
-	AudioManager.play(&"delivery")
+	sfx(&"delivery")
 	award_everyone(ScoreKeeper.OBJECTIVE, 400, "Cake delivered!")
 	if carrier:
 		award(carrier, ScoreKeeper.OBJECTIVE, 150, "Delivery!")
@@ -327,7 +340,7 @@ func on_time_up() -> void:
 	if delivered:
 		return
 	if cake.state == GiantCake.State.CARRIED:
-		cake.release(false, MatchClock.time)
+		cake.release(false, MatchClock.now(self))
 	_clear_carry_modifiers()
 	var pts := int(300.0 * _best_progress)
 	if pts > 0:
@@ -337,6 +350,36 @@ func on_time_up() -> void:
 func on_round_ended(p_success: bool) -> void:
 	super(p_success)
 	_clear_carry_modifiers()
+
+
+# ---------------------------------------------------------------- online
+
+func get_net_state() -> Dictionary:
+	var cps := PackedInt32Array()
+	for i: int in _cake_checkpoints:
+		cps.append(i)
+	return {"cake": cake.get_net_state(), "dl": delivered, "bp": _best_progress, "cc": cps,
+			"st": stars_net_state()}
+
+
+func apply_net_state(state: Dictionary) -> void:
+	if typeof(state.get("cake")) == TYPE_DICTIONARY:
+		cake.apply_net_state(state.cake, players)
+	delivered = bool(state.get("dl", delivered))
+	_best_progress = clampf(float(state.get("bp", _best_progress)), 0.0, 1.0)
+	apply_stars_net_state(state.get("st"))
+
+
+func apply_net_event(event_name: StringName, args: Array) -> void:
+	if _apply_common_event(event_name, args):
+		return
+	if event_name == &"delivered":
+		finish_zone.celebrate()
+
+
+func mode_client_process(delta: float) -> void:
+	cake.net_process(delta)
+	objective_changed.emit()
 
 
 # ---------------------------------------------------------------- HUD & results
@@ -402,7 +445,7 @@ func get_bot_goal(p: PlayerCharacter) -> Dictionary:
 			return {"position": target, "stop_distance": 0.6, "interact": true, "interact_distance": 3.0}
 		return {"position": target, "stop_distance": 0.6}
 	# Loose cake: one bot fetches it (after giving humans a head start).
-	var free_for := MatchClock.time - _cake_free_since
+	var free_for := MatchClock.now(self) - _cake_free_since
 	var human_close := false
 	for h in human_players():
 		if h.global_position.distance_to(cake.global_position) < 7.0 and not h.is_respawning:

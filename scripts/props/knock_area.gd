@@ -44,7 +44,7 @@ func _try_knock(body: Node3D) -> void:
 	if not enabled:
 		return
 	var player := body as PlayerCharacter
-	if player == null or player.is_respawning:
+	if player == null or player.is_respawning or not player.is_simulated():
 		return
 	var id := player.get_instance_id()
 	if _cooldowns.has(id):

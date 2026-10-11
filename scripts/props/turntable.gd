@@ -62,7 +62,7 @@ func _rebuild() -> void:
 func _physics_process(_delta: float) -> void:
 	if not Gen.in_game():
 		return
-	var t := (_frozen_since if _frozen else MatchClock.time) - _frozen_total
+	var t := (_frozen_since if _frozen else MatchClock.now(self)) - _frozen_total
 	rotation.y = _base_yaw + deg_to_rad(degrees_per_second * t)
 
 
@@ -70,7 +70,7 @@ func set_frozen(value: bool) -> void:
 	if value == _frozen:
 		return
 	if value:
-		_frozen_since = MatchClock.time
+		_frozen_since = MatchClock.now(self)
 	else:
-		_frozen_total += MatchClock.time - _frozen_since
+		_frozen_total += MatchClock.now(self) - _frozen_since
 	_frozen = value

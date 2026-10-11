@@ -88,6 +88,10 @@ func _physics_process(delta: float) -> void:
 		if player.velocity.y > 2.0:
 			continue
 		_cooldowns[player.get_instance_id()] = 0.3
+		if not player.is_simulated():
+			# Online: that creature's own device does the launch. Just squish.
+			_squash = 1.0
+			continue
 		player.launch(launch_speed)
 		_squash = 1.0
 		launched.emit(player)

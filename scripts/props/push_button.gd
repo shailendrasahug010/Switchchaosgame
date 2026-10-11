@@ -149,6 +149,11 @@ func _apply_lit() -> void:
 		_cap_material.emission_energy_multiplier = 0.5
 
 
+## The cap goes down (online phones replay presses the server accepted).
+func play_press() -> void:
+	_press_anim = 1.0
+
+
 ## Feedback for a correct press.
 func accept() -> void:
 	_flash = 1.0

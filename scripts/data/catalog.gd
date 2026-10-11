@@ -87,6 +87,17 @@ const CHAOS_EVENTS: Array[String] = [
 	"res://data/chaos_events/sticky.tres",
 ]
 
+## Button Mayhem buttons. Every color also has its own symbol so the game can
+## be played without telling colors apart.
+const BUTTON_COLORS: Array[Dictionary] = [
+	{"id": &"red", "name": "Red", "color": Color(1.0, 0.3, 0.43), "symbol": &"heart"},
+	{"id": &"blue", "name": "Blue", "color": Color(0.247, 0.616, 1.0), "symbol": &"circle"},
+	{"id": &"yellow", "name": "Yellow", "color": Color(1.0, 0.824, 0.247), "symbol": &"star"},
+	{"id": &"green", "name": "Green", "color": Color(0.184, 0.788, 0.478), "symbol": &"triangle"},
+	{"id": &"purple", "name": "Purple", "color": Color(0.655, 0.482, 1.0), "symbol": &"diamond"},
+	{"id": &"orange", "name": "Orange", "color": Color(1.0, 0.541, 0.298), "symbol": &"square"},
+]
+
 ## Colors that tell players apart in UI chips and name tags (P1..P4).
 const PLAYER_TAG_COLORS: Array[Color] = [
 	Color(0.247, 0.616, 1.0),
@@ -122,6 +133,13 @@ static func paint(id: StringName) -> Dictionary:
 		if p.id == id:
 			return p
 	return PAINTS[0]
+
+
+static func button_color(id: StringName) -> Dictionary:
+	for b in BUTTON_COLORS:
+		if b.id == id:
+			return b
+	return BUTTON_COLORS[0]
 
 
 static func mode(id: StringName) -> Dictionary:

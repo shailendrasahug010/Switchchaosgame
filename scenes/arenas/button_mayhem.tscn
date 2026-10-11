@@ -1,0 +1,539 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/modes/button_mayhem/button_mayhem_mode.gd" id="1_qp0qj"]
+[ext_resource type="Script" path="res://scripts/core/toy_environment.gd" id="2_2iihm"]
+[ext_resource type="Script" path="res://scripts/props/block.gd" id="3_cd3jm"]
+[ext_resource type="Script" path="res://scripts/props/push_button.gd" id="4_053ci"]
+[ext_resource type="Script" path="res://scripts/props/bounce_pad.gd" id="5_qy6pa"]
+[ext_resource type="Script" path="res://scripts/props/runaway_car.gd" id="6_b13qf"]
+[ext_resource type="Script" path="res://scripts/props/turntable.gd" id="7_fkvkp"]
+[ext_resource type="Script" path="res://scripts/props/moving_platform.gd" id="8_knq50"]
+[ext_resource type="Script" path="res://scripts/props/star_pickup.gd" id="9_w0nf5"]
+[ext_resource type="FontVariation" path="res://assets/fonts/fredoka_bold.tres" id="10_s7yxc"]
+[ext_resource type="Script" path="res://scripts/props/decor.gd" id="11_jwpqp"]
+[ext_resource type="Script" path="res://scripts/props/kill_zone.gd" id="12_rpf3v"]
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_kn6rv"]
+vertices = PackedVector3Array(-16, 0.5, -1, -16, 0.5, -6.25, -17.5, 0.5, -6.5, -19.25, 0.5, -0.75, -17.5, 0.5, -13.25, -19.25, 0.5, -15.25, -10.25, 0.5, -13.25, -10.25, 0.5, -15.25, -2.25, 0.5, -15.25, -10.25, 0.5, -7.25, -2.25, 0.5, -6.25, -1.5, 0.5, -5, 2, 0.5, -5, 8.5, 0.5, -6.5, 8.5, 0.5, -15.25, 2.25, 0.5, -4.5, 9, 0.5, -6.25, 16.75, 0.5, -11.5, 16.75, 0.5, -10.5, 17.75, 0.5, -10.25, 17.75, 0.5, -11.75, 19.5, 0.5, -15.25, 17.75, 0.5, -15.25, 17.75, 0.5, -6.5, 13.75, 0.5, -6.25, 13.75, 0.5, -3.75, 19.5, 0.5, -4, 16, 0.5, -11.75, 16, 0.5, -10.25, 10.25, 0.5, -13.75, 10.25, 0.5, -8, 16, 0.5, -13.75, 16, 0.5, -8, -15, 3.5, -7.25, -13, 3.5, -7.25, -11.5, 3.5, -7.5, -11.5, 3.5, -12.5, -16.5, 3.5, -12.5, -16.5, 3.5, -7.5, -15, 1.5, -1.5, -13, 1.5, -1.5, -16.25, 0.5, -12.25, -16.25, 0.5, -7.5, -11.5, 0.5, -7.5, -11.5, 0.5, -12.25, -2, 0.5, -4.75, -2, 0.5, -3, -10.75, 0.5, -6.25, -12, 0.5, -3, -12, 0.5, -6.25, 13.5, 0.75, -2.75, 13.25, 0.5, 7.25, 19.5, 0.5, 7, 19.5, 0.5, 0.25, 13.5, 0.5, -0.25, 1.75, 0.5, -0.75, 0, 0.5, -0.75, 13.5, 0.75, -1.25, 19, 2.5, -1, 19, 2.5, -3, 16.25, 2.25, -1.125, 16.25, 2.25, -2.875, 0, 0.5, 15.5, 13.25, 0.75, 8.25, 13.25, 0.75, 9.75, 19, 2.5, 10, 19, 2.5, 8, 16.125, 2.25, 9.875, 16.125, 2.25, 8.125, 2.25, 0.5, -1.25, 19.5, 0.5, 15.5, 19.5, 0.5, 11.25, 13.25, 0.5, 10.75, -1, 3.5, -4, -1, 3.5, -2, 1, 3.5, -2, 1, 3.5, -4, -0.75, 0.5, -3.75, -0.75, 0.5, -2, 1, 0.5, -2, 1, 0.5, -3.75, -13, 0.75, 0.5, -15, 0.75, 0.5, -16, 0.5, 0.5, -19.25, 0.5, 15.5, -2, 0.5, -1, -12, 0.5, 0.5, 17.75, 0.5, -2.75, 17.75, 0.5, -1, 19, 0.5, -1, 19, 0.5, -2.75, 17.75, 0.5, 8.25, 17.75, 0.5, 10, 19, 0.5, 10, 19, 0.5, 8.25)
+polygons = [PackedInt32Array(1, 0, 2), PackedInt32Array(2, 0, 3), PackedInt32Array(4, 2, 5), PackedInt32Array(5, 2, 3), PackedInt32Array(6, 4, 7), PackedInt32Array(7, 4, 5), PackedInt32Array(6, 7, 8), PackedInt32Array(9, 6, 10), PackedInt32Array(10, 6, 8), PackedInt32Array(11, 10, 12), PackedInt32Array(12, 10, 13), PackedInt32Array(13, 10, 14), PackedInt32Array(14, 10, 8), PackedInt32Array(12, 13, 15), PackedInt32Array(15, 13, 16), PackedInt32Array(17, 20, 18), PackedInt32Array(18, 20, 19), PackedInt32Array(19, 20, 21), PackedInt32Array(20, 22, 21), PackedInt32Array(24, 23, 25), PackedInt32Array(25, 23, 26), PackedInt32Array(23, 19, 26), PackedInt32Array(26, 19, 21), PackedInt32Array(18, 28, 17), PackedInt32Array(17, 28, 27), PackedInt32Array(27, 28, 29), PackedInt32Array(29, 28, 30), PackedInt32Array(29, 31, 27), PackedInt32Array(28, 32, 30), PackedInt32Array(33, 38, 34), PackedInt32Array(34, 38, 35), PackedInt32Array(35, 38, 37), PackedInt32Array(35, 37, 36), PackedInt32Array(33, 34, 39), PackedInt32Array(39, 34, 40), PackedInt32Array(44, 43, 41), PackedInt32Array(41, 43, 42), PackedInt32Array(10, 11, 45), PackedInt32Array(45, 46, 10), PackedInt32Array(10, 46, 9), PackedInt32Array(9, 46, 47), PackedInt32Array(47, 46, 48), PackedInt32Array(48, 49, 47), PackedInt32Array(25, 50, 24), PackedInt32Array(24, 50, 16), PackedInt32Array(53, 52, 54), PackedInt32Array(54, 52, 51), PackedInt32Array(54, 51, 55), PackedInt32Array(55, 51, 56), PackedInt32Array(50, 61, 57), PackedInt32Array(57, 61, 60), PackedInt32Array(60, 61, 59), PackedInt32Array(60, 59, 58), PackedInt32Array(63, 62, 51), PackedInt32Array(51, 62, 56), PackedInt32Array(63, 68, 64), PackedInt32Array(64, 68, 67), PackedInt32Array(67, 68, 66), PackedInt32Array(67, 66, 65), PackedInt32Array(63, 64, 62), PackedInt32Array(16, 50, 57), PackedInt32Array(57, 54, 16), PackedInt32Array(16, 54, 69), PackedInt32Array(69, 54, 55), PackedInt32Array(71, 70, 72), PackedInt32Array(72, 70, 62), PackedInt32Array(69, 15, 16), PackedInt32Array(64, 72, 62), PackedInt32Array(76, 75, 73), PackedInt32Array(73, 75, 74), PackedInt32Array(80, 79, 77), PackedInt32Array(77, 79, 78), PackedInt32Array(82, 39, 81), PackedInt32Array(81, 39, 40), PackedInt32Array(84, 83, 82), PackedInt32Array(0, 83, 3), PackedInt32Array(3, 83, 84), PackedInt32Array(46, 85, 48), PackedInt32Array(48, 85, 86), PackedInt32Array(84, 81, 86), PackedInt32Array(85, 56, 86), PackedInt32Array(86, 56, 62), PackedInt32Array(86, 62, 84), PackedInt32Array(84, 82, 81), PackedInt32Array(90, 89, 87), PackedInt32Array(87, 89, 88), PackedInt32Array(94, 93, 91), PackedInt32Array(91, 93, 92)]
+geometry_parsed_geometry_type = 1
+geometry_collision_mask = 1
+geometry_source_geometry_mode = 1
+geometry_source_group_name = &"nav_source"
+agent_max_slope = 40.0
+
+[node name="ButtonMayhem" type="Node3D" unique_id=208392450]
+script = ExtResource("1_qp0qj")
+mode_id = &"button_mayhem"
+mission_title = "Button Mayhem"
+mission_text = "Press the colored buttons in the order shown at the top. Some of them run away!"
+mission_icon = &"buttons"
+round_time = 100.0
+kill_height = -5.0
+camera_pitch = -50.0
+camera_distance = 14.0
+camera_min_distance = 11.0
+camera_max_distance = 24.0
+camera_look_ahead = Vector3(0, 0, -1)
+
+[node name="Environment" type="Node3D" parent="." unique_id=552709526]
+script = ExtResource("2_2iihm")
+style = 1
+
+[node name="Level" type="Node3D" parent="." unique_id=1155631466 groups=["nav_source"]]
+
+[node name="PlayMat" type="StaticBody3D" parent="Level" unique_id=1375109361]
+collision_mask = 0
+script = ExtResource("3_cd3jm")
+size = Vector3(40, 2, 32)
+color = Color(0.43529412, 0.5254902, 0.8784314, 1)
+top_color = Color(0.6431373, 0.7372549, 1, 1)
+pattern = 4
+pattern_color = Color(0.8235294, 0.87058824, 1, 1)
+
+[node name="WallN" type="StaticBody3D" parent="Level" unique_id=792444044]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -16.25)
+collision_mask = 0
+script = ExtResource("3_cd3jm")
+size = Vector3(41, 1.5, 0.5)
+color = Color(1, 0.7019608, 0.36078432, 1)
+top_color = Color(1, 0.9529412, 0.8392157, 1)
+pattern = 2
+pattern_color = Color(1, 0.7019608, 0.36078432, 1)
+pattern_scale = 1.2
+
+[node name="WallS" type="StaticBody3D" parent="Level" unique_id=1961640750]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 16.25)
+collision_mask = 0
+script = ExtResource("3_cd3jm")
+size = Vector3(41, 1, 0.5)
+color = Color(1, 0.7019608, 0.36078432, 1)
+top_color = Color(1, 0.9529412, 0.8392157, 1)
+pattern = 2
+pattern_color = Color(1, 0.7019608, 0.36078432, 1)
+pattern_scale = 1.2
+
+[node name="WallW" type="StaticBody3D" parent="Level" unique_id=138344274]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.25, 1.5, 0)
+collision_mask = 0
+script = ExtResource("3_cd3jm")
+size = Vector3(0.5, 1.5, 32)
+color = Color(1, 0.7019608, 0.36078432, 1)
+top_color = Color(1, 0.9529412, 0.8392157, 1)
+pattern = 2
+pattern_color = Color(1, 0.7019608, 0.36078432, 1)
+pattern_scale = 1.2
+
+[node name="WallE" type="StaticBody3D" parent="Level" unique_id=111410709]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.25, 1.5, 0)
+collision_mask = 0
+script = ExtResource("3_cd3jm")
+size = Vector3(0.5, 1.5, 32)
+color = Color(1, 0.7019608, 0.36078432, 1)
+top_color = Color(1, 0.9529412, 0.8392157, 1)
+pattern = 2
+pattern_color = Color(1, 0.7019608, 0.36078432, 1)
+pattern_scale = 1.2
+
+[node name="Tower" type="StaticBody3D" parent="Level" unique_id=503431467]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -3)
+collision_mask = 0
+script = ExtResource("3_cd3jm")
+size = Vector3(3, 3, 3)
+color = Color(1, 0.37254903, 0.65882355, 1)
+top_color = Color(1, 0.76862746, 0.8627451, 1)
+pattern = 3
+pattern_color = Color(1, 0.9411765, 0.9647059, 1)
+pattern_scale = 0.6
+
+[node name="HighDeck" type="StaticBody3D" parent="Level" unique_id=1842884783]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 3, -10)
+collision_mask = 0
+script = ExtResource("3_cd3jm")
+size = Vector3(6, 3, 6)
+color = Color(0.24705882, 0.49803922, 0.8745098, 1)
+top_color = Color(0.56078434, 0.76862746, 1, 1)
+pattern = 2
+pattern_color = Color(0.76862746, 0.8784314, 1, 1)
+pattern_scale = 0.6
+
+[node name="DeckRamp" type="StaticBody3D" parent="Level" unique_id=985657367]
+transform = Transform3D(1, 0, 0, 0, 0.945373, -0.32599068, 0, 0.32599068, 0.945373, -14, 1.5, -2.85)
+collision_mask = 0
+script = ExtResource("3_cd3jm")
+size = Vector3(2.8, 1, 9.602716)
+color = Color(0.24705882, 0.49803922, 0.8745098, 1)
+top_color = Color(0.56078434, 0.76862746, 1, 1)
+
+[node name="PillarA" type="StaticBody3D" parent="Level" unique_id=475434648]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 2, 9)
+collision_mask = 0
+script = ExtResource("3_cd3jm")
+size = Vector3(3, 2, 3)
+color = Color(0.18431373, 0.7882353, 0.47843137, 1)
+top_color = Color(0.6392157, 0.9411765, 0.78431374, 1)
+pattern = 3
+pattern_color = Color(0.8862745, 0.9843137, 0.9254902, 1)
+pattern_scale = 0.6
+
+[node name="PillarB" type="StaticBody3D" parent="Level" unique_id=572500941]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 2, -2)
+collision_mask = 0
+script = ExtResource("3_cd3jm")
+size = Vector3(3, 2, 3)
+color = Color(0.18431373, 0.7882353, 0.47843137, 1)
+top_color = Color(0.6392157, 0.9411765, 0.78431374, 1)
+pattern = 3
+pattern_color = Color(0.8862745, 0.9843137, 0.9254902, 1)
+pattern_scale = 0.6
+
+[node name="PillarRampA" type="StaticBody3D" parent="Level" unique_id=384851532]
+transform = Transform3D(-4.371139e-08, -0.4472136, -0.8944272, 0, 0.8944272, -0.4472136, 1, -1.9548327e-08, -3.9096655e-08, 14.6, 1, 9)
+collision_mask = 0
+script = ExtResource("3_cd3jm")
+size = Vector3(2.4, 1, 4.872136)
+color = Color(0.18431373, 0.7882353, 0.47843137, 1)
+top_color = Color(0.6392157, 0.9411765, 0.78431374, 1)
+
+[node name="PillarRampB" type="StaticBody3D" parent="Level" unique_id=327518343]
+transform = Transform3D(-4.371139e-08, -0.4657464, -0.8849182, 0, 0.8849182, -0.4657464, 1, -2.0358423e-08, -3.8681005e-08, 14.700001, 1, -2)
+collision_mask = 0
+script = ExtResource("3_cd3jm")
+size = Vector3(2.4, 1, 4.6941824)
+color = Color(0.18431373, 0.7882353, 0.47843137, 1)
+top_color = Color(0.6392157, 0.9411765, 0.78431374, 1)
+
+[node name="FortN" type="StaticBody3D" parent="Level" unique_id=655215814]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 2.6, -14.75)
+collision_mask = 0
+script = ExtResource("3_cd3jm")
+size = Vector3(8, 2.6, 0.5)
+color = Color(1, 0.56078434, 0.7529412, 1)
+top_color = Color(1, 0.8392157, 0.9098039, 1)
+
+[node name="FortW" type="StaticBody3D" parent="Level" unique_id=375741752]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.25, 2.6, -11)
+collision_mask = 0
+script = ExtResource("3_cd3jm")
+size = Vector3(0.5, 2.6, 8)
+color = Color(1, 0.56078434, 0.7529412, 1)
+top_color = Color(1, 0.8392157, 0.9098039, 1)
+
+[node name="FortSL" type="StaticBody3D" parent="Level" unique_id=1455916837]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.8, 2.6, -7.25)
+collision_mask = 0
+script = ExtResource("3_cd3jm")
+size = Vector3(3.6, 2.6, 0.5)
+color = Color(1, 0.56078434, 0.7529412, 1)
+top_color = Color(1, 0.8392157, 0.9098039, 1)
+
+[node name="FortSR" type="StaticBody3D" parent="Level" unique_id=2035112080]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.2, 2.6, -7.25)
+collision_mask = 0
+script = ExtResource("3_cd3jm")
+size = Vector3(3.6, 2.6, 0.5)
+color = Color(1, 0.56078434, 0.7529412, 1)
+top_color = Color(1, 0.8392157, 0.9098039, 1)
+
+[node name="FortSTop" type="StaticBody3D" parent="Level" unique_id=1852648855]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 2.6, -7.25)
+collision_mask = 0
+script = ExtResource("3_cd3jm")
+size = Vector3(0.8, 1.75, 0.5)
+color = Color(1, 0.56078434, 0.7529412, 1)
+top_color = Color(1, 0.8392157, 0.9098039, 1)
+
+[node name="FortEN" type="StaticBody3D" parent="Level" unique_id=2022234076]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.75, 2.6, -13.6)
+collision_mask = 0
+script = ExtResource("3_cd3jm")
+size = Vector3(0.5, 2.6, 2.8)
+color = Color(1, 0.56078434, 0.7529412, 1)
+top_color = Color(1, 0.8392157, 0.9098039, 1)
+
+[node name="FortES" type="StaticBody3D" parent="Level" unique_id=639785042]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.75, 2.6, -8.4)
+collision_mask = 0
+script = ExtResource("3_cd3jm")
+size = Vector3(0.5, 2.6, 2.8)
+color = Color(1, 0.56078434, 0.7529412, 1)
+top_color = Color(1, 0.8392157, 0.9098039, 1)
+
+[node name="FortETop" type="StaticBody3D" parent="Level" unique_id=2042435428]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.75, 2.6, -11)
+collision_mask = 0
+script = ExtResource("3_cd3jm")
+size = Vector3(0.5, 0.4, 2.4)
+color = Color(1, 0.56078434, 0.7529412, 1)
+top_color = Color(1, 0.8392157, 0.9098039, 1)
+
+[node name="Buttons" type="Node3D" parent="." unique_id=1939808613]
+
+[node name="RedButton" type="Node3D" parent="Buttons" unique_id=1729151936]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 0, 6.5)
+script = ExtResource("4_053ci")
+prompt = "PRESS"
+prompt_icon = &"buttons"
+cooldown = 0.8
+
+[node name="BlueButton" type="Node3D" parent="Buttons" unique_id=760016267]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 3, -10.5)
+script = ExtResource("4_053ci")
+color_id = &"blue"
+prompt = "PRESS"
+prompt_icon = &"buttons"
+cooldown = 0.8
+
+[node name="OrangeButton" type="Node3D" parent="Buttons" unique_id=388946073]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 0, -11)
+script = ExtResource("4_053ci")
+color_id = &"orange"
+prompt = "PRESS"
+prompt_icon = &"buttons"
+cooldown = 0.8
+
+[node name="Moving" type="Node3D" parent="." unique_id=301510515]
+
+[node name="TowerPad" type="Area3D" parent="Moving" unique_id=1470893795]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.2, 0, -3)
+collision_layer = 8
+collision_mask = 2
+monitorable = false
+script = ExtResource("5_qy6pa")
+
+[node name="RunawayCar" type="AnimatableBody3D" parent="Moving" unique_id=809156036]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.8)
+collision_mask = 0
+script = ExtResource("6_b13qf")
+loop_center = Vector3(0, 0, -3)
+loop_radii = Vector2(6.5, 4.8)
+
+[node name="PurpleButton" type="Node3D" parent="Moving/RunawayCar" unique_id=1162736589]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.77, 0)
+script = ExtResource("4_053ci")
+color_id = &"purple"
+radius = 0.5
+prompt = "PRESS"
+prompt_icon = &"buttons"
+interact_radius = 2.2
+cooldown = 0.8
+
+[node name="DeckPad" type="Area3D" parent="Moving" unique_id=822395431]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0, -10)
+collision_layer = 8
+collision_mask = 2
+monitorable = false
+script = ExtResource("5_qy6pa")
+color = Color(0.24705882, 0.6156863, 1, 1)
+
+[node name="Turntable" type="AnimatableBody3D" parent="Moving" unique_id=238873354]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0.03, 8)
+collision_mask = 0
+script = ExtResource("7_fkvkp")
+radius = 3.6
+degrees_per_second = 28.0
+color = Color(1, 0.7019608, 0.36078432, 1)
+
+[node name="YellowButton" type="Node3D" parent="Moving/Turntable" unique_id=2011867034]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.2, 0, 0)
+script = ExtResource("4_053ci")
+color_id = &"yellow"
+prompt = "PRESS"
+prompt_icon = &"buttons"
+cooldown = 0.8
+
+[node name="Shuttle" type="AnimatableBody3D" parent="Moving" unique_id=1476201446]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 2, 6.2)
+collision_mask = 0
+script = ExtResource("8_knq50")
+size = Vector3(2.6, 0.5, 2.6)
+color = Color(0.49019608, 1, 0.6901961, 1)
+travel = Vector3(0, 0, -5.4)
+period = 7.0
+hold = 0.22
+
+[node name="GreenButton" type="Node3D" parent="Moving/Shuttle" unique_id=2007629784]
+script = ExtResource("4_053ci")
+color_id = &"green"
+radius = 0.65
+prompt = "PRESS"
+prompt_icon = &"buttons"
+interact_radius = 2.4
+cooldown = 0.8
+
+[node name="Stars" type="Node3D" parent="." unique_id=1531088657]
+
+[node name="Star01" type="Area3D" parent="Stars" unique_id=2119408520]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.8, -3)
+collision_layer = 8
+collision_mask = 2
+monitorable = false
+script = ExtResource("9_w0nf5")
+
+[node name="Star02" type="Area3D" parent="Stars" unique_id=1117140646]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 3.9, -10)
+collision_layer = 8
+collision_mask = 2
+monitorable = false
+script = ExtResource("9_w0nf5")
+
+[node name="Star03" type="Area3D" parent="Stars" unique_id=40053509]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.8, 4, -12.2)
+collision_layer = 8
+collision_mask = 2
+monitorable = false
+script = ExtResource("9_w0nf5")
+
+[node name="Star04" type="Area3D" parent="Stars" unique_id=671320439]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 1.2, 8)
+collision_layer = 8
+collision_mask = 2
+monitorable = false
+script = ExtResource("9_w0nf5")
+
+[node name="Star05" type="Area3D" parent="Stars" unique_id=418156100]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 3.6, 3.5)
+collision_layer = 8
+collision_mask = 2
+monitorable = false
+script = ExtResource("9_w0nf5")
+
+[node name="Star06" type="Area3D" parent="Stars" unique_id=1445047737]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.6, 1.2, -13.4)
+collision_layer = 8
+collision_mask = 2
+monitorable = false
+script = ExtResource("9_w0nf5")
+
+[node name="Decor" type="Node3D" parent="." unique_id=212344159]
+
+[node name="DeckSign" type="Label3D" parent="Decor" unique_id=475554450]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 4.6, -12.9)
+pixel_size = 0.01
+outline_modulate = Color(0.24705882, 0.49803922, 0.8745098, 1)
+text = "HIGH DECK"
+font = ExtResource("10_s7yxc")
+font_size = 64
+
+[node name="Battlement0" type="StaticBody3D" parent="Decor" unique_id=863532298]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.6, 3, -14.75)
+collision_mask = 0
+script = ExtResource("3_cd3jm")
+size = Vector3(0.6, 0.4, 0.6)
+color = Color(1, 0.56078434, 0.7529412, 1)
+top_color = Color(1, 0.8392157, 0.9098039, 1)
+frosted = false
+
+[node name="Battlement1" type="StaticBody3D" parent="Decor" unique_id=1726690718]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.96, 3, -14.75)
+collision_mask = 0
+script = ExtResource("3_cd3jm")
+size = Vector3(0.6, 0.4, 0.6)
+color = Color(1, 0.56078434, 0.7529412, 1)
+top_color = Color(1, 0.8392157, 0.9098039, 1)
+frosted = false
+
+[node name="Battlement2" type="StaticBody3D" parent="Decor" unique_id=1016647801]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.32, 3, -14.75)
+collision_mask = 0
+script = ExtResource("3_cd3jm")
+size = Vector3(0.6, 0.4, 0.6)
+color = Color(1, 0.56078434, 0.7529412, 1)
+top_color = Color(1, 0.8392157, 0.9098039, 1)
+frosted = false
+
+[node name="Battlement3" type="StaticBody3D" parent="Decor" unique_id=693401795]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.68, 3, -14.75)
+collision_mask = 0
+script = ExtResource("3_cd3jm")
+size = Vector3(0.6, 0.4, 0.6)
+color = Color(1, 0.56078434, 0.7529412, 1)
+top_color = Color(1, 0.8392157, 0.9098039, 1)
+frosted = false
+
+[node name="Battlement4" type="StaticBody3D" parent="Decor" unique_id=1988061059]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.04, 3, -14.75)
+collision_mask = 0
+script = ExtResource("3_cd3jm")
+size = Vector3(0.6, 0.4, 0.6)
+color = Color(1, 0.56078434, 0.7529412, 1)
+top_color = Color(1, 0.8392157, 0.9098039, 1)
+frosted = false
+
+[node name="Battlement5" type="StaticBody3D" parent="Decor" unique_id=1282415704]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.4, 3, -14.75)
+collision_mask = 0
+script = ExtResource("3_cd3jm")
+size = Vector3(0.6, 0.4, 0.6)
+color = Color(1, 0.56078434, 0.7529412, 1)
+top_color = Color(1, 0.8392157, 0.9098039, 1)
+frosted = false
+
+[node name="TinyDoorSign" type="Label3D" parent="Decor" unique_id=62892606]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 1.7, -6.85)
+pixel_size = 0.01
+modulate = Color(1, 0.9529412, 0.6392157, 1)
+outline_modulate = Color(0.9098039, 0.33333334, 0.6039216, 1)
+text = "TINY DOOR"
+font = ExtResource("10_s7yxc")
+font_size = 40
+outline_size = 8
+
+[node name="FortSign" type="Label3D" parent="Decor" unique_id=981166302]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 3.6, -15.1)
+pixel_size = 0.01
+outline_modulate = Color(0.9098039, 0.33333334, 0.6039216, 1)
+text = "TOY FORT"
+font = ExtResource("10_s7yxc")
+font_size = 72
+outline_size = 14
+
+[node name="BlockA" type="Node3D" parent="Decor" unique_id=1615566716]
+transform = Transform3D(0.9659258, 0, 0.25881904, 0, 1, 0, -0.25881904, 0, 0.9659258, -18.4, 0, -14.4)
+script = ExtResource("11_jwpqp")
+kind = 6
+color = Color(1, 0.37254903, 0.49411765, 1)
+size_scale = 1.2
+solid = true
+
+[node name="BlockB" type="Node3D" parent="Decor" unique_id=402532419]
+transform = Transform3D(0.9848077, 0, -0.17364818, 0, 1, 0, 0.17364818, 0, 0.9848077, -4, 0, -14.6)
+script = ExtResource("11_jwpqp")
+kind = 6
+color = Color(0.24705882, 0.6156863, 1, 1)
+letter = "B"
+solid = true
+
+[node name="BlockC" type="Node3D" parent="Decor" unique_id=1834029311]
+transform = Transform3D(0.99026805, 0, 0.1391731, 0, 1, 0, -0.1391731, 0, 0.99026805, 4.2, 0, -14.6)
+script = ExtResource("11_jwpqp")
+kind = 6
+color = Color(0.18431373, 0.7882353, 0.47843137, 1)
+letter = "C"
+solid = true
+
+[node name="Crayon1" type="Node3D" parent="Decor" unique_id=1736206766]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.6, 0, -1)
+script = ExtResource("11_jwpqp")
+kind = 7
+color = Color(0.654902, 0.48235294, 1, 1)
+size_scale = 1.3
+
+[node name="Teddy" type="Node3D" parent="Decor" unique_id=1378268992]
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, -18.2, 0, 14)
+script = ExtResource("11_jwpqp")
+kind = 8
+color = Color(0.7882353, 0.54509807, 0.3529412, 1)
+accent = Color(0.9529412, 0.8235294, 0.6901961, 1)
+size_scale = 1.2
+
+[node name="Balloons1" type="Node3D" parent="Decor" unique_id=1691719760]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 0, 14.6)
+script = ExtResource("11_jwpqp")
+kind = 0
+
+[node name="Balloons2" type="Node3D" parent="Decor" unique_id=583307483]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 0, 14.6)
+script = ExtResource("11_jwpqp")
+kind = 0
+color = Color(1, 0.8235294, 0.24705882, 1)
+
+[node name="TitleSign" type="Label3D" parent="Decor" unique_id=938684276]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 3.2, -16.6)
+pixel_size = 0.01
+modulate = Color(1, 0.9529412, 0.6392157, 1)
+outline_modulate = Color(0.48235294, 0.36078432, 1, 1)
+text = "BUTTON MAYHEM"
+font = ExtResource("10_s7yxc")
+font_size = 110
+outline_size = 22
+
+[node name="Markers" type="Node3D" parent="." unique_id=214020660]
+
+[node name="Spawn1" type="Marker3D" parent="Markers" unique_id=168360490 groups=["spawn"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.05, 12)
+
+[node name="Spawn2" type="Marker3D" parent="Markers" unique_id=363157849 groups=["spawn"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0.05, 12.5)
+
+[node name="Spawn3" type="Marker3D" parent="Markers" unique_id=8158543 groups=["spawn"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0.05, 12.5)
+
+[node name="Spawn4" type="Marker3D" parent="Markers" unique_id=900015274 groups=["spawn"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0.05, 12)
+
+[node name="WaitGreen" type="Marker3D" parent="Markers" unique_id=1478531262 groups=["button_wait"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 2, 7.85)
+metadata/button = "green"
+
+[node name="BelowTheFloor" type="Area3D" parent="." unique_id=92569371]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6, 0)
+collision_layer = 8
+collision_mask = 6
+monitorable = false
+script = ExtResource("12_rpf3v")
+size = Vector3(70, 4, 60)
+show_goo = false
+
+[node name="Navigation" type="NavigationRegion3D" parent="." unique_id=999918575]
+navigation_mesh = SubResource("NavigationMesh_kn6rv")

@@ -46,6 +46,20 @@ func test_cake_dash_full_round_with_bots() -> void:
 	await end_scene()
 
 
+func test_button_mayhem_full_round_with_bots() -> void:
+	var m := await _play_round(&"button_mayhem", 4321)
+	if m:
+		var mode := m.mode as ButtonMayhemMode
+		note("button presses right: %d / %d, wave %d, completed=%s" % [mode.right_presses, mode.total_needed(),
+				mode.wave, mode.completed])
+		var wrong := 0
+		for i in m.players.size():
+			wrong += int(m.score.get_stat(i, &"wrong_presses"))
+		note("wrong presses: %d" % wrong)
+		check(mode.right_presses >= 6, "CPU team pressed at least half of the buttons in order")
+	await end_scene()
+
+
 func test_restart_creates_fresh_round() -> void:
 	var setup := MatchSetup.quick(&"cake_dash", 1, 3)
 	setup.seed = 99

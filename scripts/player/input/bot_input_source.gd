@@ -13,6 +13,8 @@ extends PlayerInputSource
 ##   jump_distance: float   how close before jumping (default 2.2)
 ##   interact: bool         press interact when within interact_distance
 ##   interact_distance: float
+##   interact_at: Vector3   measure interact_distance to this point instead of
+##                          position (wait somewhere, press something that moves)
 ##   wait: bool             stand still
 
 var provider: Object = null
@@ -133,6 +135,8 @@ func update(delta: float, player: Node) -> void:
 	_interact_cooldown -= delta
 	if goal.get("interact", false) and _interact_cooldown <= 0.0:
 		var reach: float = goal.get("interact_distance", 1.6)
-		if dist <= reach and absf(to.y) < 2.5:
+		var at: Vector3 = goal.get("interact_at", target)
+		var d_at := at - pos
+		if Vector2(d_at.x, d_at.z).length() <= reach and absf(d_at.y) < 2.5:
 			press_interact()
 			_interact_cooldown = 0.9

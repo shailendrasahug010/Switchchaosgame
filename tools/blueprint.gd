@@ -103,11 +103,56 @@ static func star(parent: Node, name: String, pos: Vector3) -> StarPickup:
 	return s
 
 
+static func push_button(parent: Node, name: String, color_id: StringName, pos: Vector3,
+		radius: float = 0.8, reach: float = 0.0) -> PushButton:
+	var b := PushButton.new()
+	b.name = name
+	b.color_id = color_id
+	b.radius = radius
+	if reach > 0.0:
+		b.interact_radius = reach
+	b.position = pos
+	parent.add_child(b)
+	return b
+
+
 static func group_node(parent: Node, name: String) -> Node3D:
 	var n := Node3D.new()
 	n.name = name
 	parent.add_child(n)
 	return n
+
+
+## Bakes a navigation mesh for CPU buddies from the static colliders under
+## [param sources] (floors, walls, ramps) and adds it to [param root] as a
+## NavigationRegion3D. Moving things are left out on purpose.
+static func bake_navigation(tree: SceneTree, root: Node3D, sources: Array[Node]) -> NavigationRegion3D:
+	for s in sources:
+		s.add_to_group(&"nav_source", true)
+	var nm := NavigationMesh.new()
+	nm.agent_radius = 0.5
+	nm.agent_height = 1.5
+	nm.agent_max_climb = 0.25
+	nm.agent_max_slope = 40.0
+	nm.cell_size = 0.25
+	nm.cell_height = 0.25
+	nm.geometry_parsed_geometry_type = NavigationMesh.PARSED_GEOMETRY_STATIC_COLLIDERS
+	nm.geometry_collision_mask = Layers.WORLD
+	nm.geometry_source_geometry_mode = NavigationMesh.SOURCE_GEOMETRY_GROUPS_WITH_CHILDREN
+	nm.geometry_source_group_name = &"nav_source"
+	# Props build their collision shapes in _ready, so the arena has to be in
+	# the tree while the geometry is read.
+	tree.root.add_child(root)
+	var data := NavigationMeshSourceGeometryData3D.new()
+	NavigationServer3D.parse_source_geometry_data(nm, data, root)
+	NavigationServer3D.bake_from_source_geometry_data(nm, data)
+	tree.root.remove_child(root)
+	var region := NavigationRegion3D.new()
+	region.name = "Navigation"
+	region.navigation_mesh = nm
+	root.add_child(region)
+	print("Navigation mesh baked: %d polygons" % nm.get_polygon_count())
+	return region
 
 
 ## Makes every node below [param root] owned by it so PackedScene.pack saves them.

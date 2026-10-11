@@ -11,7 +11,19 @@ extends SceneTree
 const BP := preload("res://tools/blueprint.gd")
 
 
-func _initialize() -> void:
+var _done := false
+
+
+# Building waits for the first frame: baking navigation needs a running tree.
+func _process(_delta: float) -> bool:
+	if _done:
+		return true
+	_done = true
+	_build_requested()
+	return false
+
+
+func _build_requested() -> void:
 	var which := OS.get_cmdline_user_args()
 	if which.is_empty() or which.has("cake_dash"):
 		build_cake_dash()
@@ -261,3 +273,164 @@ func build_cake_dash() -> void:
 		BP.marker(markers, "Path%02d" % (i + 1), path[i], &"bot_path")
 
 	BP.save(root, "res://scenes/arenas/cake_dash.tscn")
+
+
+# =====================================================================
+# Button Mayhem: a walled toy-box playroom (+Z = where the players start).
+# Six buttons, each needing a different skill: open floor (red), a high
+# deck (blue), a turntable (yellow), a sliding shuttle (green), a toy fort
+# with a tiny door (orange) and a runaway wind-up car (purple).
+# =====================================================================
+
+func build_button_mayhem() -> void:
+	var root := _mode_root("res://scripts/modes/button_mayhem/button_mayhem_mode.gd", "ButtonMayhem")
+	root.set("mode_id", &"button_mayhem")
+	root.set("mission_title", "Button Mayhem")
+	root.set("mission_text", "Press the colored buttons in the order shown at the top. Some of them run away!")
+	root.set("mission_icon", &"buttons")
+	root.set("round_time", 100.0)
+	root.set("team_mode", true)
+	root.set("kill_height", -5.0)
+	root.set("camera_pitch", -50.0)
+	root.set("camera_distance", 14.0)
+	root.set("camera_min_distance", 11.0)
+	root.set("camera_max_distance", 24.0)
+	root.set("camera_look_ahead", Vector3(0, 0, -1))
+
+	var env := ToyEnvironment.new()
+	env.name = "Environment"
+	env.style = ToyEnvironment.Style.TOYBOX
+	root.add_child(env)
+
+	var level := BP.group_node(root, "Level")
+	var props := BP.group_node(root, "Buttons")
+	var obstacles := BP.group_node(root, "Moving")
+	var pickups := BP.group_node(root, "Stars")
+	var deco := BP.group_node(root, "Decor")
+	var markers := BP.group_node(root, "Markers")
+
+	var below := KillZone.new()
+	below.name = "BelowTheFloor"
+	below.size = Vector3(70, 4, 60)
+	below.position = Vector3(0, -6, 0)
+	below.show_goo = false
+	root.add_child(below)
+
+	# ---- Play mat and toy-box rim
+	BP.block(level, "PlayMat", Vector3(0, 0, 0), Vector3(40, 2, 32), Color("6f86e0"), Color("a4bcff"),
+			ToyMaterials.Pattern.GRID, Color("d2deff"), 0.5)
+	var rim := Color("ffb35c")
+	BP.block(level, "WallN", Vector3(0, 1.5, -16.25), Vector3(41, 1.5, 0.5), rim, Color("fff3d6"),
+			ToyMaterials.Pattern.STRIPES, rim, 1.2)
+	BP.block(level, "WallS", Vector3(0, 1.0, 16.25), Vector3(41, 1.0, 0.5), rim, Color("fff3d6"),
+			ToyMaterials.Pattern.STRIPES, rim, 1.2)
+	BP.block(level, "WallW", Vector3(-20.25, 1.5, 0), Vector3(0.5, 1.5, 32), rim, Color("fff3d6"),
+			ToyMaterials.Pattern.STRIPES, rim, 1.2)
+	BP.block(level, "WallE", Vector3(20.25, 1.5, 0), Vector3(0.5, 1.5, 32), rim, Color("fff3d6"),
+			ToyMaterials.Pattern.STRIPES, rim, 1.2)
+	for i in 4:
+		var x := -3.0 + i * 2.0
+		BP.marker(markers, "Spawn%d" % (i + 1), Vector3(x, 0.05, 12.0 + (0.5 if i in [1, 2] else 0.0)), &"spawn")
+
+	# ---- Red: out in the open (the easy one)
+	BP.push_button(props, "RedButton", &"red", Vector3(-4.5, 0, 6.5))
+
+	# ---- Purple: rides the runaway car around the block tower
+	BP.block(level, "Tower", Vector3(0, 3.0, -3), Vector3(3, 3, 3), Color("ff5fa8"), Color("ffc4dc"),
+			ToyMaterials.Pattern.DOTS, Color("fff0f6"), 0.6)
+	BP.star(pickups, "Star01", Vector3(0, 3.8, -3))
+	var tower_pad := BouncePad.new()
+	tower_pad.name = "TowerPad"
+	tower_pad.position = Vector3(-3.2, 0, -3)
+	tower_pad.launch_speed = 15.0
+	obstacles.add_child(tower_pad)
+	var car := RunawayCar.new()
+	car.name = "RunawayCar"
+	car.loop_center = Vector3(0, 0, -3)
+	car.loop_radii = Vector2(6.5, 4.8)
+	car.position = Vector3(0, 0, 1.8)
+	obstacles.add_child(car)
+	BP.push_button(car, "PurpleButton", &"purple", Vector3(0, 0.77, 0), 0.5, 2.2)
+
+	# ---- Blue: up on the high deck (ramp around the side, or the bounce pad)
+	BP.block(level, "HighDeck", Vector3(-14, 3, -10), Vector3(6, 3, 6), Color("3f7fdf"), Color("8fc4ff"),
+			ToyMaterials.Pattern.STRIPES, Color("c4e0ff"), 0.6)
+	BP.ramp(level, "DeckRamp", Vector3(-14, 0, 1.5), Vector3(-14, 3, -7.2), 2.8, Color("3f7fdf"), Color("8fc4ff"))
+	BP.push_button(props, "BlueButton", &"blue", Vector3(-14, 3, -10.5))
+	var deck_pad := BouncePad.new()
+	deck_pad.name = "DeckPad"
+	deck_pad.position = Vector3(-9.0, 0, -10)
+	deck_pad.launch_speed = 15.0
+	deck_pad.color = Color("3f9dff")
+	obstacles.add_child(deck_pad)
+	BP.star(pickups, "Star02", Vector3(-9.0, 3.9, -10))
+	BP.star(pickups, "Star03", Vector3(-15.8, 4.0, -12.2))
+	BP.sign(deco, "DeckSign", "HIGH DECK", Vector3(-14, 4.6, -12.9), 64, Color.WHITE, Color("3f7fdf"))
+
+	# ---- Yellow: on a slowly spinning turntable
+	var spin := Turntable.new()
+	spin.name = "Turntable"
+	spin.position = Vector3(-12, 0.03, 8)
+	spin.radius = 3.6
+	spin.degrees_per_second = 28.0
+	spin.color = Color("ffb35c")
+	spin.stripe_color = Color("fff3a3")
+	obstacles.add_child(spin)
+	BP.push_button(spin, "YellowButton", &"yellow", Vector3(2.2, 0, 0))
+	BP.star(pickups, "Star04", Vector3(-12, 1.2, 8))
+
+	# ---- Green: on a shuttle sliding between two pillars by the east wall
+	var green_col := Color("2fc97a")
+	BP.block(level, "PillarA", Vector3(18, 2, 9), Vector3(3, 2, 3), green_col, Color("a3f0c8"),
+			ToyMaterials.Pattern.DOTS, Color("e2fbec"), 0.6)
+	BP.block(level, "PillarB", Vector3(18, 2, -2), Vector3(3, 2, 3), green_col, Color("a3f0c8"),
+			ToyMaterials.Pattern.DOTS, Color("e2fbec"), 0.6)
+	BP.ramp(level, "PillarRampA", Vector3(12.6, 0, 9), Vector3(16.6, 2, 9), 2.4, green_col, Color("a3f0c8"))
+	BP.ramp(level, "PillarRampB", Vector3(12.8, 0, -2), Vector3(16.6, 2, -2), 2.4, green_col, Color("a3f0c8"))
+	var shuttle := MovingPlatform.new()
+	shuttle.name = "Shuttle"
+	shuttle.position = Vector3(18, 2, 6.2)
+	shuttle.size = Vector3(2.6, 0.5, 2.6)
+	shuttle.travel = Vector3(0, 0, -5.4)
+	shuttle.period = 7.0
+	shuttle.hold = 0.22
+	shuttle.color = Color("7dffb0")
+	obstacles.add_child(shuttle)
+	BP.push_button(shuttle, "GreenButton", &"green", Vector3(0, 0, 0), 0.65, 2.4)
+	BP.star(pickups, "Star05", Vector3(18, 3.6, 3.5))
+
+	# ---- Orange: inside the toy fort. Big door round the back, tiny door in front.
+	var fort := Color("ff8fc0")
+	var fort_top := Color("ffd6e8")
+	BP.block(level, "FortN", Vector3(13, 2.6, -14.75), Vector3(8, 2.6, 0.5), fort, fort_top)
+	BP.block(level, "FortW", Vector3(9.25, 2.6, -11), Vector3(0.5, 2.6, 8), fort, fort_top)
+	BP.block(level, "FortSL", Vector3(10.8, 2.6, -7.25), Vector3(3.6, 2.6, 0.5), fort, fort_top)
+	BP.block(level, "FortSR", Vector3(15.2, 2.6, -7.25), Vector3(3.6, 2.6, 0.5), fort, fort_top)
+	BP.block(level, "FortSTop", Vector3(13, 2.6, -7.25), Vector3(0.8, 1.75, 0.5), fort, fort_top)
+	BP.block(level, "FortEN", Vector3(16.75, 2.6, -13.6), Vector3(0.5, 2.6, 2.8), fort, fort_top)
+	BP.block(level, "FortES", Vector3(16.75, 2.6, -8.4), Vector3(0.5, 2.6, 2.8), fort, fort_top)
+	BP.block(level, "FortETop", Vector3(16.75, 2.6, -11), Vector3(0.5, 0.4, 2.4), fort, fort_top)
+	for i in 6:
+		BP.block(deco, "Battlement%d" % i, Vector3(9.6 + i * 1.36, 3.0, -14.75), Vector3(0.6, 0.4, 0.6), fort, fort_top,
+				ToyMaterials.Pattern.NONE, Color.WHITE, 0.5, false)
+	BP.push_button(props, "OrangeButton", &"orange", Vector3(13, 0, -11))
+	BP.sign(deco, "TinyDoorSign", "TINY DOOR", Vector3(13, 1.7, -6.85), 40, Color("fff3a3"), Color("e8559a"))
+	BP.sign(deco, "FortSign", "TOY FORT", Vector3(13, 3.6, -15.1), 72, Color.WHITE, Color("e8559a"))
+	BP.star(pickups, "Star06", Vector3(10.6, 1.2, -13.4))
+
+	# ---- Decorations along the walls
+	BP.decor(deco, "BlockA", Decor.Kind.TOY_BLOCK, Vector3(-18.4, 0, -14.4), Color("ff5f7e"), Color("fff8ee"), 1.2, 15, true, "A")
+	BP.decor(deco, "BlockB", Decor.Kind.TOY_BLOCK, Vector3(-4.0, 0, -14.6), Color("3f9dff"), Color("fff8ee"), 1.0, -10, true, "B")
+	BP.decor(deco, "BlockC", Decor.Kind.TOY_BLOCK, Vector3(4.2, 0, -14.6), Color("2fc97a"), Color("fff8ee"), 1.0, 8, true, "C")
+	BP.decor(deco, "Crayon1", Decor.Kind.CRAYON, Vector3(-18.6, 0, -1.0), Color("a77bff"), Color("fff8ee"), 1.3, 0)
+	BP.decor(deco, "Teddy", Decor.Kind.TEDDY, Vector3(-18.2, 0, 14.0), Color("c98b5a"), Color("f3d2b0"), 1.2, 30)
+	BP.decor(deco, "Balloons1", Decor.Kind.BALLOONS, Vector3(-7.0, 0, 14.6), Color("ff5fa8"))
+	BP.decor(deco, "Balloons2", Decor.Kind.BALLOONS, Vector3(9.0, 0, 14.6), Color("ffd23f"))
+	BP.sign(deco, "TitleSign", "BUTTON MAYHEM", Vector3(-5, 3.2, -16.6), 110, Color("fff3a3"), Color("7b5cff"))
+
+	# ---- CPU buddies: a navigation mesh for getting around, plus a spot to
+	# wait for buttons that move past a fixed point (the shuttle).
+	BP.marker(markers, "WaitGreen", Vector3(18, 2, 7.85), &"button_wait", {"button": "green"})
+	BP.bake_navigation(self, root, [level])
+
+	BP.save(root, "res://scenes/arenas/button_mayhem.tscn")

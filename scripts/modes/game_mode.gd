@@ -40,6 +40,8 @@ var round_active := false
 
 var _bot_waypoint: Dictionary = {}   # player_index -> int
 var _bot_ride: Dictionary = {}       # player_index -> bool (riding a platform)
+var _nav_paths: Dictionary = {}      # player_index -> {target, path, index, time}
+var _nav_region: NavigationRegion3D = null
 
 
 # ---------------------------------------------------------------- lifecycle
@@ -47,6 +49,8 @@ var _bot_ride: Dictionary = {}       # player_index -> bool (riding a platform)
 func setup_mode(p_match: MatchController) -> void:
 	match_node = p_match
 	rng.seed = p_match.round_seed
+	for n in find_children("*", "NavigationRegion3D", true, false):
+		_nav_region = n as NavigationRegion3D
 
 
 ## Spawn transforms in the order players are placed (group "spawn", sorted by name).
@@ -157,15 +161,17 @@ func handle_interact(player: PlayerCharacter) -> void:
 		it.interact(player)
 
 
+## Nearest usable Interactable in reach. Giant players have longer arms.
 func find_interactable(player: PlayerCharacter) -> Interactable:
 	var best: Interactable = null
 	var best_d := INF
+	var arm := maxf(1.0, player.size_scale)
 	for n in get_tree().get_nodes_in_group(&"interactable"):
 		var it := n as Interactable
 		if it == null or not is_ancestor_of(it) or not it.can_interact(player):
 			continue
 		var d := it.get_interact_position().distance_to(player.global_position)
-		if d <= it.interact_radius and d < best_d:
+		if d <= it.interact_radius * arm and d < best_d:
 			best = it
 			best_d = d
 	return best
@@ -281,3 +287,56 @@ func _is_above(pos: Vector3, center: Vector3, box: Vector3) -> bool:
 func reset_bot_path(player: PlayerCharacter) -> void:
 	_bot_waypoint.erase(player.player_index)
 	_bot_ride.erase(player.player_index)
+	_nav_paths.erase(player.player_index)
+
+
+# ---------------------------------------------------------------- navigation
+
+func has_navigation() -> bool:
+	return _nav_region != null and _nav_region.navigation_mesh != null
+
+
+## A bot goal toward [param target] that walks around walls and up ramps using
+## the arena's navigation mesh (baked by tools/build_arenas.gd). Intermediate
+## corners use a small stop distance; [param stop_distance] applies at the end.
+## [param extra] keys (interact, interact_at...) are copied into the goal.
+func nav_goal(player: PlayerCharacter, target: Vector3, stop_distance: float = 0.6,
+		extra: Dictionary = {}) -> Dictionary:
+	var g := extra.duplicate()
+	var step := nav_next_point(player, target)
+	g["position"] = step.point
+	g["stop_distance"] = stop_distance if step.final else 0.25
+	if g.get("interact", false) and not g.has("interact_at"):
+		g["interact_at"] = target
+	return g
+
+
+## Next corner on the navigation path from [param player] to [param target].
+## Returns {point: Vector3, final: bool}. Without a navigation mesh (or before
+## the navigation map is ready) it simply heads straight for the target.
+func nav_next_point(player: PlayerCharacter, target: Vector3) -> Dictionary:
+	if not has_navigation() or not is_inside_tree():
+		return {"point": target, "final": true}
+	var now := MatchClock.time
+	var pos := player.global_position
+	var st: Dictionary = _nav_paths.get(player.player_index, {})
+	if st.is_empty() or (st.target as Vector3).distance_to(target) > 0.8 or now - float(st.time) > 0.75:
+		var map := get_world_3d().navigation_map
+		var path := NavigationServer3D.map_get_path(map, pos, target, true)
+		st = {"target": target, "path": path, "index": 0, "time": now}
+		_nav_paths[player.player_index] = st
+	var path: PackedVector3Array = st.path
+	if path.size() < 2:
+		return {"point": target, "final": true}
+	var i: int = st.index
+	while i < path.size() - 1:
+		var d := path[i] - pos
+		if Vector2(d.x, d.z).length() > 0.7:
+			break
+		i += 1
+	st.index = i
+	if i >= path.size() - 1:
+		# Past the last corner: aim at the real target (it may be just off the
+		# navigation mesh, like a button on a moving platform).
+		return {"point": target, "final": true}
+	return {"point": path[i], "final": false}

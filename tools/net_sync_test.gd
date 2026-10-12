@@ -10,7 +10,8 @@ extends SceneTree
 ##   godot --headless --path . -s tools/net_sync_test.gd -- --only=reconnect
 ##
 ## Scenarios: sync (3 phones + 1 CPU, Bounce Race), reconnect, modes (Button
-## Mayhem and Cake Dash), cheat. Exit code 0 = everything passed.
+## Mayhem and Cake Dash), cheat, lobby (two phones use the real Online screen
+## for two rounds). Exit code 0 = everything passed.
 ## Takes a few minutes: rounds run in real time (shortened to 30 seconds).
 
 const PORT_BASE := 7811
@@ -45,6 +46,8 @@ func _run() -> void:
 		await _scenario_modes()
 	if only == "" or only == "cheat":
 		await _scenario_cheat()
+	if only == "" or only == "lobby":
+		await _scenario_lobby()
 	_kill_all()
 	print("------------------------------------------------------")
 	print("%d checks passed, %d failed (%.0f s)" % [_passes, _failures.size(), (Time.get_ticks_msec() - t0) / 1000.0])
@@ -161,6 +164,76 @@ func _scenario_cheat() -> void:
 	var r := _first(logs.get("c1", []), "results")
 	_check(not r.is_empty(), "cheat: the round still finished normally")
 	_check_clean_output(dir, ["server", "c1", "c2"], "cheat")
+
+
+func _scenario_lobby() -> void:
+	print("\n== lobby: two phones use the real Online screen (make a room, type the code, pick the game, START) for two rounds")
+	var dir := _fresh_dir("lobby")
+	var port := PORT_BASE + 5
+	_start_server(dir, port, 25)
+	await _sleep(1.5)
+	_start_phone(dir, port, "c1", ["--net-test=ui-create", "--players=2", "--mode=cake_dash,button_mayhem",
+			"--rounds=2", "--cpus"])
+	_start_phone(dir, port, "c2", ["--net-test=ui-join", "--rounds=2", "--look=jelly", "--screen=2400x1080"])
+	var logs := await _wait_for_results(dir, ["c1", "c2"], 160.0, 2)
+	await _stop_all(dir)
+	var c1: Array = logs.get("c1", [])
+	var c2: Array = logs.get("c2", [])
+	var shown := _first_ui(c1, "room_code_shown")
+	var code := String(shown.get("code", ""))
+	_check(code.length() == 5 and bool(shown.get("matches_net", false)),
+			"lobby: tapping \"Make a room\" shows the room code on screen (%s)" % code)
+	var typed := _first_ui(c2, "typed_code")
+	_check(not typed.is_empty() and bool(typed.get("join_was_disabled", false)) and bool(typed.get("join_enabled", false)),
+			"lobby: the friend types the code on the letter keys; Join! only lights up with all 5")
+	var joined := _first_ui(c2, "in_room")
+	_check(String(joined.get("code", "")) == code and int(joined.get("players", 0)) == 2 and not bool(joined.get("host", true)),
+			"lobby: the friend's room screen shows the same code, both players, and they are not the host")
+	var offscreen := []
+	for e in c1 + c2:
+		if e.ev == "offscreen":
+			offscreen.append(e.button)
+	var screens := [_first_ui(c1, "screen").get("size", []), _first_ui(c2, "screen").get("size", [])]
+	_check(offscreen.is_empty() and screens[0] == [1280.0, 720.0] and screens[1] == [1600.0, 720.0],
+			"lobby: every button the phones needed was on the screen (16:9 and 20:9 phones) %s" % [offscreen])
+	var m1 := _all(c1, "match")
+	var m2 := _all(c2, "match")
+	_check(m1.size() == 2 and m2.size() == 2, "lobby: both phones played two rounds (%d / %d)" % [m1.size(), m2.size()])
+	if m1.size() == 2 and m2.size() == 2:
+		for r in 2:
+			var want: String = ["cake_dash", "button_mayhem"][r]
+			_check(m1[r].mode == want and m2[r].mode == want and m1[r].seed == m2[r].seed,
+					"lobby: round %d is %s on both phones (picked on the room screen)" % [r + 1, want])
+		_check(m1[0].seed != m1[1].seed, "lobby: round 2 is a fresh round (new seed)")
+		_check(int(m1[0].players) == 4, "lobby: CPU buddies filled the two empty seats (%d creatures)" % int(m1[0].players))
+		var other := int(m2[0].index)
+		var chars: Array = m1[0].get("chars", [])
+		_check(other >= 0 and other < chars.size() and chars[other] == "jelly",
+				"lobby: the host sees the friend's chosen creature (%s)" % [chars[other] if other >= 0 and other < chars.size() else "?"])
+	var r1 := _all(c1, "results")
+	var r2 := _all(c2, "results")
+	for r in mini(r1.size(), r2.size()):
+		_check(r1[r].totals == r2[r].totals, "lobby: both phones agree on round %d's points %s" % [r + 1, r1[r].totals])
+	var back1 := _first_ui(c1, "back_in_room")
+	var back2 := _first_ui(c2, "pressed_back_to_room")
+	_check(back1.get("state", "") == "lobby" and not back2.is_empty(),
+			"lobby: \"Back to the room\" after the results returns to the room screen, ready for the next round")
+	_check_clean_output(dir, ["server", "c1", "c2"], "lobby")
+
+
+func _first_ui(entries: Array, what: String) -> Dictionary:
+	for e in entries:
+		if e.ev == "ui" and e.get("what", "") == what:
+			return e
+	return {}
+
+
+func _all(entries: Array, ev: String) -> Array:
+	var out := []
+	for e in entries:
+		if e.ev == ev:
+			out.append(e)
+	return out
 
 
 # ---------------------------------------------------------------- checks
@@ -376,10 +449,11 @@ func _first(entries: Array, ev: String) -> Dictionary:
 	return {}
 
 
-func _wait_for_results(dir: String, names: Array, timeout: float) -> Dictionary:
+## Waits until every phone logged [param rounds] results (or the timeout).
+func _wait_for_results(dir: String, names: Array, timeout: float, rounds: int = 1) -> Dictionary:
 	await _wait_until(func() -> bool:
 		for n in names:
-			if _first(_read_log(dir.path_join(n + ".jsonl")), "results").is_empty():
+			if _all(_read_log(dir.path_join(n + ".jsonl")), "results").size() < rounds:
 				return false
 		return true, timeout)
 	await _sleep(1.0)

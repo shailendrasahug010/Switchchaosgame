@@ -21,18 +21,22 @@ func show_results(r: Dictionary) -> void:
 	_buttons.clear()
 	visible = true
 	add_child(UiKit.dimmer(0.45))
+	var outer := UiKit.margin(18, 14, 18, 14)
+	add_child(outer)
+	UiKit.full_rect(outer)
+	var page := UiKit.vbox(10)
+	outer.add_child(page)
+	# The cards scroll if a small screen needs it, but the buttons stay pinned
+	# to the bottom of the screen: "Play again" is always one tap away.
 	var scroll := ScrollContainer.new()
+	scroll.name = "CardsScroll"
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	add_child(scroll)
-	UiKit.full_rect(scroll)
-	var outer := UiKit.margin(18)
-	outer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	outer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.add_child(outer)
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	page.add_child(scroll)
 	var col := UiKit.vbox(12, BoxContainer.ALIGNMENT_CENTER)
 	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	col.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	outer.add_child(col)
+	scroll.add_child(col)
 
 	# Headline
 	var success: bool = r.success
@@ -90,7 +94,8 @@ func show_results(r: Dictionary) -> void:
 
 	# Buttons
 	var brow := UiKit.hbox(16, BoxContainer.ALIGNMENT_CENTER)
-	col.add_child(brow)
+	brow.name = "Buttons"
+	page.add_child(brow)
 	if bool(r.get("online", false)):
 		# Online the host starts the next round from the room screen.
 		var room := UiKit.icon_button("Back to the room", &"next", &"GreenButton", 84)
@@ -150,11 +155,17 @@ func _player_card(info: Dictionary, rank: int, team: bool, success: bool) -> Con
 	var ad := UiKit.wrap_label(String(award.text), &"DarkSmallLabel", HORIZONTAL_ALIGNMENT_CENTER)
 	ad.custom_minimum_size.x = 220
 	acol.add_child(ad)
+	# What the points were for: the three biggest parts (keeps cards short).
 	var breakdown: Dictionary = info.breakdown
+	var parts := []
 	for cat in ScoreKeeper.CATEGORIES:
 		var pts := int(breakdown.get(cat, 0))
-		if pts <= 0:
-			continue
+		if pts > 0:
+			parts.append([cat, pts])
+	parts.sort_custom(func(a: Array, b: Array) -> bool: return int(a[1]) > int(b[1]))
+	for part in parts.slice(0, 3):
+		var cat: StringName = part[0]
+		var pts := int(part[1])
 		var row := UiKit.hbox(6)
 		col.add_child(row)
 		var l := UiKit.label(String(ScoreKeeper.CATEGORY_NAMES[cat]), &"DarkSmallLabel")

@@ -136,14 +136,16 @@ func unlock_rule_text(item: Dictionary) -> String:
 	for key in rule:
 		var need := int(rule[key])
 		var have := mini(int(stats.get(key, 0)), need)
-		var label: String = {
-			"rounds_played": "Play %d rounds",
-			"stars": "Collect %d stars",
-			"party_points": "Earn %d party points",
-			"cakes_delivered": "Deliver %d cakes",
-			"buttons_pressed": "Press %d right buttons",
-			"races_finished": "Finish %d races",
-		}.get(key, key + " %d") % need
+		# [one, many]: "Play 1 round", "Play 5 rounds".
+		var forms: Array = {
+			"rounds_played": ["Play %d round", "Play %d rounds"],
+			"stars": ["Collect %d star", "Collect %d stars"],
+			"party_points": ["Earn %d party point", "Earn %d party points"],
+			"cakes_delivered": ["Deliver %d cake", "Deliver %d cakes"],
+			"buttons_pressed": ["Press %d right button", "Press %d right buttons"],
+			"races_finished": ["Finish %d race", "Finish %d races"],
+		}.get(key, [key + " %d", key + " %d"])
+		var label: String = String(forms[0 if need == 1 else 1]) % need
 		parts.append("%s (%d/%d)" % [label, have, need])
 	return ", ".join(parts)
 

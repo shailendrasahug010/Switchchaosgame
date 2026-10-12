@@ -192,3 +192,27 @@ func test_grown_up_gate_guards_online_play() -> void:
 	check(bool(gs.get_setting("online_allowed")), "the right answer switches online play on")
 	page._online_btn.pressed.emit()
 	check(not bool(gs.get_setting("online_allowed")), "switching it off needs no check")
+
+
+func test_online_code_entry_and_server_address() -> void:
+	gs.settings.online_allowed = true
+	var lobby := await _open(&"online")
+	lobby._show_code_entry()
+	await process_frames(2)
+	var join := lobby.find_child("JoinButton", true, false) as Button
+	if not check(join != null, "the code screen has a Join! button"):
+		return
+	check(join.disabled, "Join! starts switched off")
+	for ch in "B0OC7":  # 0 and O are look-alikes, so codes never use them
+		lobby._type(ch)
+	check_eq(lobby._code_typed, "BC7", "characters that are not in codes are ignored")
+	for ch in "KMQ":
+		lobby._type(ch)
+	check_eq(lobby._code_typed, "BC7KM", "a code has at most 5 characters")
+	check(not join.disabled, "Join! lights up with all 5")
+	lobby._delete()
+	check(join.disabled, "deleting one switches Join! off again")
+	for good in ["192.168.1.20", "game.example.org", "10.0.0.5:7777"]:
+		check(lobby.is_valid_server_address(good), "server address %s is accepted" % good)
+	for bad in ["", "http://x.org", "a b", "x:99999", "x:0", "host:port"]:
+		check(not lobby.is_valid_server_address(bad), "server address '%s' is refused" % bad)

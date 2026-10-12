@@ -39,6 +39,14 @@ static func draw(ci: CanvasItem, icon: StringName, o: Vector2, s: float, color: 
 			_poly(ci, [c + Vector2(-r * 0.45, -r * 0.65), c + Vector2(r * 0.7, 0), c + Vector2(-r * 0.45, r * 0.65)], color)
 		&"back":
 			_arrow(ci, c, r, Vector2.LEFT, color)
+		&"backspace":
+			# A key pointing left with a cross in it (the "delete" key on phones).
+			_poly(ci, [c + Vector2(-r * 0.95, 0), c + Vector2(-r * 0.42, -r * 0.6), c + Vector2(r * 0.9, -r * 0.6),
+					c + Vector2(r * 0.9, r * 0.6), c + Vector2(-r * 0.42, r * 0.6)], color)
+			var xc := c + Vector2(r * 0.22, 0)
+			var ink := Color(INK, color.a)
+			ci.draw_line(xc + Vector2(-r, -r) * 0.3, xc + Vector2(r, r) * 0.3, ink, r * 0.17, true)
+			ci.draw_line(xc + Vector2(r, -r) * 0.3, xc + Vector2(-r, r) * 0.3, ink, r * 0.17, true)
 		&"next":
 			_arrow(ci, c, r, Vector2.RIGHT, color)
 		&"up":

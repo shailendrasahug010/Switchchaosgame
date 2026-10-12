@@ -62,6 +62,9 @@ var _rooms: Dictionary = {}     # code -> NetRoom
 var _peer_room: Dictionary = {} # peer id -> code
 var _join_tries: Dictionary = {}  # peer id -> Array of times
 var _housekeeping := 0.0
+var _traffic_timer := 0.0
+## How often the room server logs its network traffic (seconds; --traffic-log=N).
+var traffic_log_seconds := 60.0
 var _live_peers: Dictionary = {}  # peer id -> true while connected
 var max_rooms := 200
 var round_time_override := 0.0
@@ -165,6 +168,7 @@ func _room_of(peer: int) -> NetRoom:
 func _process(delta: float) -> void:
 	if is_server:
 		_housekeeping += delta
+		_traffic_timer += delta
 		if _housekeeping >= 1.0:
 			_housekeeping = 0.0
 			if stop_file != "" and FileAccess.file_exists(stop_file):
@@ -176,8 +180,30 @@ func _process(delta: float) -> void:
 				var room: NetRoom = _rooms[code]
 				if not room.check_timeouts(now):
 					_close_room(code)
+			if _traffic_timer >= traffic_log_seconds:
+				_log_traffic()
 		return
 	_client_process(delta)
+
+
+## Room server: logs the network traffic every [member traffic_log_seconds]
+## (default once a minute) while anyone is connected, to size and price the
+## hosting. Bytes include ENet headers but not UDP/IP headers (add about
+## 28 bytes per packet for those).
+func _log_traffic() -> void:
+	var seconds := _traffic_timer
+	_traffic_timer = 0.0
+	var enet := multiplayer.multiplayer_peer as ENetMultiplayerPeer
+	if enet == null or enet.host == null:
+		return
+	var sent := enet.host.pop_statistic(ENetConnection.HOST_TOTAL_SENT_DATA)
+	var received := enet.host.pop_statistic(ENetConnection.HOST_TOTAL_RECEIVED_DATA)
+	var peers := _live_peers.size()
+	if peers == 0:
+		return
+	log_line("traffic: %d phones in %d rooms, sent %.1f KB/s (%.1f per phone), received %.1f KB/s (%.1f per phone)" % [
+			peers, _rooms.size(), sent / 1024.0 / seconds, sent / 1024.0 / seconds / peers,
+			received / 1024.0 / seconds, received / 1024.0 / seconds / peers])
 
 
 func _close_room(code: String) -> void:

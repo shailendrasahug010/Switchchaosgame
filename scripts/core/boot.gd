@@ -13,6 +13,7 @@ extends Node
 ##   --server [--port=7777] run the online room server (headless)
 ##            [--max-rooms=200] [--round-time=SECONDS] (shorter rounds for tests)
 ##            [--stop-file=PATH] (tests: quit cleanly once that file exists)
+##            [--traffic-log=60] (log network traffic every N seconds)
 
 
 func _ready() -> void:
@@ -20,6 +21,7 @@ func _ready() -> void:
 	if args.has("server"):
 		Net.round_time_override = float(args.get("round-time", "0"))
 		Net.stop_file = String(args.get("stop-file", ""))
+		Net.traffic_log_seconds = maxf(5.0, float(args.get("traffic-log", "60")))
 		var err := Net.start_server(int(args.get("port", Net.DEFAULT_PORT)), int(args.get("max-rooms", "200")))
 		if err != OK:
 			get_tree().quit(1)

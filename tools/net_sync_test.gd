@@ -81,6 +81,12 @@ func _scenario_sync() -> void:
 	await _stop_all(dir)
 	_check_same_round(logs, "sync")
 	_check_positions(logs, "sync")
+	var traffic := PackedStringArray()
+	for line in FileAccess.get_file_as_string(dir.path_join("server.out")).split("\n"):
+		if line.contains("traffic:"):
+			traffic.append(line.strip_edges())
+			print("  ", line.strip_edges())
+	_check(traffic.size() >= 2, "sync: the server logged its network traffic (%d lines)" % traffic.size())
 	_check_clean_output(dir, ["server", "c1", "c2", "c3"], "sync")
 
 
@@ -398,7 +404,7 @@ func _fresh_dir(name: String) -> String:
 
 func _start_server(dir: String, port: int, round_time: int) -> int:
 	return _spawn(dir, "server", ["--", "--server", "--port=%d" % port, "--round-time=%d" % round_time,
-			"--stop-file=" + dir.path_join("stop")])
+			"--stop-file=" + dir.path_join("stop"), "--traffic-log=10"])
 
 
 func _start_phone(dir: String, port: int, name: String, extra: Array) -> int:

@@ -1,7 +1,7 @@
 class_name GrownUpGate
 extends Control
 ## A simple "ask a grown-up" check before settings that grown-ups should
-## decide (like switching on online play): type the answer to a sum written
+## decide (like switching on online play): type the answer to a multiplication written
 ## in words, on a big number pad. It is a speed bump for young children, not
 ## real security, and the docs say so.
 

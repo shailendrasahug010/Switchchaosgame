@@ -5,7 +5,7 @@ extends Node
 ## One local player : WASD or arrow keys, Space to jump, E / Shift to interact,
 ##                    any gamepad, plus the touch controls.
 ## Two+ local players: P1 = WASD + Space + E   (+ gamepad 0)
-##                     P2 = arrows + Enter + Right Shift (+ gamepad 1)
+##                     P2 = arrows + Enter + / (+ gamepad 1)
 ##                     P3 = gamepad 2, P4 = gamepad 3
 ## Touch controls always drive P1.
 

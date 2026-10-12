@@ -2,7 +2,7 @@ class_name ButtonMayhemMode
 extends GameMode
 ## Mode B: press the colored buttons in the right order.
 ##
-## The round has three waves (3, 4 and 5 buttons). The HUD shows the whole
+## The round has three waves (4, 5 and 6 buttons). The HUD shows the whole
 ## sequence; the next button starts glowing (with an arrow) if nobody has found
 ## it after a few seconds. Some buttons are easy, some sit on a high platform,
 ## a spinning turntable or a sliding platform, one hides in a toy fort with a

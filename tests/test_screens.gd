@@ -172,6 +172,7 @@ func test_settings_change_and_save_options() -> void:
 func test_grown_up_gate_guards_online_play() -> void:
 	var page := await _open(&"parents")
 	check(not bool(gs.get_setting("online_allowed")), "online play starts switched off")
+	check(_button_text(page._online_btn).begins_with("Online play: OFF"), "the switch says it is off")
 	page._online_btn.pressed.emit()
 	await process_frames(3)
 	var gate: GrownUpGate = null
@@ -190,6 +191,7 @@ func test_grown_up_gate_guards_online_play() -> void:
 	gate._check()
 	await process_frames(2)
 	check(bool(gs.get_setting("online_allowed")), "the right answer switches online play on")
+	check(_button_text(page._online_btn).begins_with("Online play: ON"), "the switch says it is on")
 	page._online_btn.pressed.emit()
 	check(not bool(gs.get_setting("online_allowed")), "switching it off needs no check")
 
@@ -216,3 +218,25 @@ func test_online_code_entry_and_server_address() -> void:
 		check(lobby.is_valid_server_address(good), "server address %s is accepted" % good)
 	for bad in ["", "http://x.org", "a b", "x:99999", "x:0", "host:port"]:
 		check(not lobby.is_valid_server_address(bad), "server address '%s' is refused" % bad)
+
+
+func test_grown_ups_page_shows_software_licenses() -> void:
+	var page := await _open(&"parents")
+	var button := page.find_child("LicensesButton", true, false) as Button
+	if not check(button != null, "the Grown-ups page has a Software licenses button"):
+		return
+	button.pressed.emit()
+	await process_frames(3)
+	var overlay: LicensesOverlay = null
+	for c in page.get_children():
+		if c is LicensesOverlay:
+			overlay = c
+	if not check(overlay != null, "the licenses open"):
+		return
+	var text := (overlay.find_child("LicenseText", true, false) as TextEdit).text
+	check(text.contains("SIL OPEN FONT LICENSE"), "the font's license text is included")
+	check(text.contains("Godot Engine") and text.contains("Permission is hereby granted"), "the engine's MIT license text is included")
+	check(text.contains("FreeType") or text.contains("ENet"), "third-party engine parts are listed")
+	(overlay.find_child("CloseLicenses", true, false) as Button).pressed.emit()
+	await process_frames(2)
+	check(not is_instance_valid(overlay) or overlay.is_queued_for_deletion(), "Close closes the licenses")

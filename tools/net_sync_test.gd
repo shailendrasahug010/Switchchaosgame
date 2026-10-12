@@ -8,6 +8,8 @@ extends SceneTree
 ##
 ##   godot --headless --path . -s tools/net_sync_test.gd
 ##   godot --headless --path . -s tools/net_sync_test.gd -- --only=reconnect
+##   godot --headless --path . -s tools/net_sync_test.gd -- --server-exe=build/server/chaos-switch-server.x86_64
+##       (the room server is an exported build, as it would run on a real server)
 ##
 ## Scenarios: sync (3 phones + 1 CPU, Bounce Race), reconnect, modes (Button
 ## Mayhem and Cake Dash), cheat, lobby (two phones use the real Online screen
@@ -17,6 +19,7 @@ extends SceneTree
 const PORT_BASE := 7811
 
 var _exe := ""
+var _server_exe := ""   # an exported server build instead of this project (optional)
 var _project := ""
 var _work := ""
 var _failures: PackedStringArray = []
@@ -37,6 +40,12 @@ func _run() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--only="):
 			only = a.trim_prefix("--only=")
+		elif a.begins_with("--server-exe="):
+			_server_exe = ProjectSettings.globalize_path(a.trim_prefix("--server-exe=")) \
+					if a.trim_prefix("--server-exe=").begins_with("res://") else a.trim_prefix("--server-exe=")
+			if _server_exe.is_relative_path():
+				_server_exe = _project.path_join(_server_exe)
+			print("Room server: exported build ", _server_exe)
 	var t0 := Time.get_ticks_msec()
 	if only == "" or only == "sync":
 		await _scenario_sync()
@@ -402,9 +411,13 @@ func _start_phone(dir: String, port: int, name: String, extra: Array) -> int:
 ## Starts a separate Godot program. Its output goes to <name>.out (written
 ## when it exits normally).
 func _spawn(dir: String, name: String, args: Array) -> int:
+	var exe := _exe
 	var all := ["--headless", "--log-file", dir.path_join(name + ".out"), "--path", _project]
+	if name == "server" and _server_exe != "":
+		exe = _server_exe
+		all = ["--headless", "--log-file", dir.path_join(name + ".out")]
 	all.append_array(args)
-	var pid := OS.create_process(_exe, PackedStringArray(all))
+	var pid := OS.create_process(exe, PackedStringArray(all))
 	_procs.append(pid)
 	return pid
 

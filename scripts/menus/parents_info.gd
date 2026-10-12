@@ -37,7 +37,7 @@ const SECTIONS: Array[Dictionary] = [
 	{
 		"title": "Credits",
 		"icon": &"bell",
-		"text": "Game code, 3D shapes, icons and sound effects were made for this project. Font: Fredoka (SIL Open Font License 1.1). Made with the Godot Engine (MIT license).",
+		"text": "Game code, 3D shapes, icons, sound effects and music were made for this project. Font: Fredoka (SIL Open Font License 1.1). Made with the Godot Engine (MIT license). The full license texts are below.",
 	},
 ]
 
@@ -85,6 +85,12 @@ func _ready() -> void:
 			_online_btn.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 			_online_btn.pressed.connect(_toggle_online)
 			inner.add_child(_online_btn)
+		elif s.title == "Credits":
+			var lic := UiKit.icon_button("Software licenses", &"info", &"DarkButton", 64)
+			lic.name = "LicensesButton"
+			lic.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+			lic.pressed.connect(func() -> void: add_child(LicensesOverlay.new()))
+			inner.add_child(lic)
 	_refresh()
 
 
@@ -113,7 +119,7 @@ func _back() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"ui_cancel"):
 		for c in get_children():
-			if c is GrownUpGate:
+			if c is GrownUpGate or c is LicensesOverlay:
 				c.queue_free()
 				return
 		_back()

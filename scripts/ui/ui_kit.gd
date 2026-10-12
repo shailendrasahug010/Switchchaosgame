@@ -53,26 +53,34 @@ static func icon_button(text: String, icon: StringName, variation: StringName = 
 	row.add_theme_constant_override("separation", 12)
 	var ic := Icon.new(icon, icon_color, min_height * 0.46)
 	row.add_child(ic)
-	if text != "":
-		var l := label(text)
-		var font_size := b.get_theme_font_size("font_size")
-		l.add_theme_font_size_override("font_size", font_size)
-		var col := b.get_theme_color("font_color")
-		l.add_theme_color_override("font_color", col)
-		l.add_theme_font_override("font", b.get_theme_font("font"))
-		l.name = "Text"
-		row.add_child(l)
-		b.custom_minimum_size.x = maxf(b.custom_minimum_size.x, min_height * 0.5 + 60 + text.length() * font_size * 0.55)
-	else:
-		b.custom_minimum_size.x = maxf(b.custom_minimum_size.x, min_height)
 	b.add_child(row)
+	b.custom_minimum_size.x = maxf(b.custom_minimum_size.x, min_height)
+	if text != "":
+		set_icon_button_text(b, text)
 	return b
 
 
+## Changes (or adds) the text of a button made with icon_button().
 static func set_icon_button_text(b: Button, text: String) -> void:
 	var l := b.find_child("Text", true, false) as Label
-	if l:
-		l.text = text
+	if l == null:
+		var row: HBoxContainer = null
+		for c in b.get_children():
+			if c is HBoxContainer:
+				row = c
+		if row == null:
+			b.text = text
+			return
+		l = label(text)
+		l.add_theme_font_size_override("font_size", b.get_theme_font_size("font_size"))
+		l.add_theme_color_override("font_color", b.get_theme_color("font_color"))
+		l.add_theme_font_override("font", b.get_theme_font("font"))
+		l.name = "Text"
+		row.add_child(l)
+	l.text = text
+	var font_size := b.get_theme_font_size("font_size")
+	b.custom_minimum_size.x = maxf(b.custom_minimum_size.x,
+			b.custom_minimum_size.y * 0.5 + 60 + text.length() * font_size * 0.55)
 
 
 static func panel(variation: StringName = &"") -> PanelContainer:

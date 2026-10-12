@@ -75,8 +75,13 @@ func test_pause_menu_buttons_work_while_paused() -> void:
 	await process_frames(5)
 	var gs := tree.root.get_node("GameState")
 	var was_muted: bool = gs.get_setting("muted", false)
+	var sound_text := (m.pause_menu._sound as Button).find_child("Text", true, false) as Label
+	check(sound_text != null and sound_text.text == ("Sound: OFF" if was_muted else "Sound: ON"),
+			"the sound button says whether sound is on")
 	(m.pause_menu._sound as Button).pressed.emit()
 	check(gs.get_setting("muted", false) != was_muted, "sound button toggles sound while paused")
+	check(sound_text != null and sound_text.text == ("Sound: ON" if was_muted else "Sound: OFF"),
+			"the sound button's words follow the change")
 	(m.pause_menu._sound as Button).pressed.emit()
 	(m.pause_menu._resume as Button).pressed.emit()
 	await process_frames(2)

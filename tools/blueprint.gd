@@ -155,6 +155,23 @@ static func bake_navigation(tree: SceneTree, root: Node3D, sources: Array[Node])
 	return region
 
 
+## A box the navigation bake treats as off limits (plus the agent radius), for
+## things CPU buddies should walk around rather than over, like a bouncy
+## jelly block. Only used while baking: free it after [method bake_navigation].
+static func nav_blocker(parent: Node3D, name: String, center: Vector3, size: Vector3) -> NavigationObstacle3D:
+	var ob := NavigationObstacle3D.new()
+	ob.name = name
+	ob.position = Vector3(center.x, center.y - size.y * 0.5, center.z)
+	var hx := size.x * 0.5
+	var hz := size.z * 0.5
+	ob.vertices = PackedVector3Array([Vector3(-hx, 0, -hz), Vector3(hx, 0, -hz), Vector3(hx, 0, hz), Vector3(-hx, 0, hz)])
+	ob.height = size.y
+	ob.avoidance_enabled = false
+	ob.affect_navigation_mesh = true
+	parent.add_child(ob)
+	return ob
+
+
 ## Makes every node below [param root] owned by it so PackedScene.pack saves them.
 static func own_all(node: Node, root: Node) -> void:
 	for c in node.get_children():

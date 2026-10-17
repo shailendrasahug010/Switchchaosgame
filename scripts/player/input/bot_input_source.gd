@@ -52,6 +52,8 @@ func update(delta: float, player: Node) -> void:
 		jump_held = false
 		return
 	var goal: Dictionary = provider.get_bot_goal(player)
+	if provider.has_method("adjust_bot_goal"):
+		goal = provider.adjust_bot_goal(player, goal)
 	if goal.is_empty() or goal.get("wait", false) or not goal.has("position"):
 		jump_held = false
 		return

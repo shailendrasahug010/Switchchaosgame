@@ -60,6 +60,55 @@ func test_button_mayhem_full_round_with_bots() -> void:
 	await end_scene()
 
 
+## CPU buddies must follow the cake around the cookie wall (navigation mesh),
+## time their way past the swinging hammers on the bridge, and never stand
+## stuck somewhere far from the cake. Before this was fixed, the same five
+## rounds had 88 falls into the frosting (up to 13 per buddy per round).
+func test_cake_dash_cpu_buddies_keep_up_with_the_cake() -> void:
+	var total_falls := 0
+	for seed_value in [11, 12, 13, 14, 15]:
+		var setup := MatchSetup.quick(&"cake_dash", 0, 4)
+		setup.seed = seed_value
+		var m := await start_match(setup)
+		if not check(m != null, "match scene loaded"):
+			return
+		var mode := m.mode as CakeDashMode
+		var falls: Array[int] = [0, 0, 0, 0]
+		for i in m.players.size():
+			var idx := i
+			m.players[i].fell_out.connect(func() -> void: falls[idx] += 1)
+		var trail: Array = [[], [], [], []]
+		var still: Array[int] = [0, 0, 0, 0]
+		var worst_still: Array[int] = [0, 0, 0, 0]
+		var frames := 0
+		while m.phase != MatchController.Phase.RESULTS and frames < 140 * 60:
+			await tree.physics_frame
+			frames += 1
+			if frames % 60 != 0 or m.phase != MatchController.Phase.PLAYING or mode.delivered:
+				continue
+			# Once a second: is anyone standing still far away from the cake?
+			for i in m.players.size():
+				var p := m.players[i]
+				var t: Array = trail[i]
+				t.append(p.global_position)
+				var moved := 99.0 if t.size() < 7 else (t[-1] as Vector3).distance_to(t[-7])
+				var far := p.global_position.distance_to(mode.cake.global_position) > 12.0
+				still[i] = still[i] + 1 if (far and moved < 1.5 and not p.is_respawning) else 0
+				worst_still[i] = maxi(worst_still[i], still[i])
+		var round_falls := 0
+		for f in falls:
+			round_falls += f
+		total_falls += round_falls
+		note("seed %d: delivered=%s in %.1fs, falls %s, longest stand-still far from the cake %s s"
+				% [seed_value, mode.delivered, m.elapsed, str(falls), str(worst_still)])
+		check(mode.delivered, "seed %d: the CPU team delivered the cake" % seed_value)
+		for i in worst_still.size():
+			check(worst_still[i] <= 8, "seed %d: %s stood stuck far from the cake for %d s" % [
+					seed_value, m.players[i].character_id, worst_still[i]])
+		await end_scene()
+	check(total_falls <= 8, "CPU buddies fell into the frosting %d times in 5 rounds (8 allowed)" % total_falls)
+
+
 func test_bounce_race_full_round_with_bots() -> void:
 	var m := await _play_round(&"bounce_race", 777)
 	if m:

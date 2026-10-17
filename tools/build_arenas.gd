@@ -271,6 +271,13 @@ func build_cake_dash() -> void:
 	]
 	for i in path.size():
 		BP.marker(markers, "Path%02d" % (i + 1), path[i], &"bot_path")
+	# Helpers and cake fetchers walk around the cookie wall and stay on the
+	# bridge using a navigation mesh (the carrier follows the path above).
+	# The bouncy jelly block is off limits for them (it would fling them away).
+	var no_jelly := BP.nav_blocker(level, "NavNoJelly", Vector3(4.3, 0.35, -70), Vector3(2.4, 2.0, 2.4))
+	BP.bake_navigation(self, root, [level])
+	level.remove_child(no_jelly)
+	no_jelly.free()
 
 	BP.save(root, "res://scenes/arenas/cake_dash.tscn")
 

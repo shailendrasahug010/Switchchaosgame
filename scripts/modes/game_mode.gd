@@ -51,6 +51,9 @@ var _bot_ride: Dictionary = {}       # player_index -> bool (riding a platform)
 var _nav_paths: Dictionary = {}      # player_index -> {target, path, index, time}
 var _nav_region: NavigationRegion3D = null
 var _stars_cache: Array[StarPickup] = []
+var _swingers: Array[Pendulum] = []
+var _hazard_wait_since: Dictionary = {}  # player_index -> round time the wait began
+var _hazard_brave_until: Dictionary = {} # player_index -> round time (gave up waiting)
 
 
 # ---------------------------------------------------------------- lifecycle
@@ -60,6 +63,8 @@ func setup_mode(p_match: MatchController) -> void:
 	rng.seed = p_match.round_seed
 	for n in find_children("*", "NavigationRegion3D", true, false):
 		_nav_region = n as NavigationRegion3D
+	for n in find_children("*", "Pendulum", true, false):
+		_swingers.append(n as Pendulum)
 
 
 ## Spawn transforms in the order players are placed (group "spawn", sorted by name).
@@ -339,6 +344,57 @@ func get_bot_goal(_player: PlayerCharacter) -> Dictionary:
 	return {}
 
 
+## Final touch on every CPU buddy goal (called by BotInputSource): a buddy
+## about to walk through a swinging hammer's lane waits at its edge until the
+## hammer has swung past, then goes. The longer it waits, the shorter the gap
+## it insists on, and after [constant HAZARD_PATIENCE] seconds it simply goes,
+## so nobody waits forever (say, in Sticky Mode).
+const HAZARD_PATIENCE := 6.0
+
+func adjust_bot_goal(player: PlayerCharacter, goal: Dictionary) -> Dictionary:
+	var idx := player.player_index
+	if _swingers.is_empty() or not goal.has("position") or goal.get("wait", false):
+		_hazard_wait_since.erase(idx)
+		return goal
+	var now := MatchClock.now(self)
+	if now < float(_hazard_brave_until.get(idx, -1.0)):
+		return goal
+	var top_speed := maxf(1.0, player.max_speed * player.stat(&"speed"))
+	# Waddling (Penguin Mode) or a slippery floor make the crossing slower;
+	# carrying the cake steers smoothly, so it takes a moment to get going.
+	var cruise := top_speed * 0.9
+	if player.stat_max(&"waddle") > 0.0 or player.stat(&"traction") < 0.5:
+		cruise *= 0.75
+	var lag := 0.3 if goal.get("careful", false) else 0.12
+	var waited := now - float(_hazard_wait_since[idx]) if _hazard_wait_since.has(idx) else 0.0
+	var strictness := 1.0 - waited / HAZARD_PATIENCE
+	var radius := 0.45 * player.size_scale
+	var height := 1.3 * player.size_scale
+	for sw in _swingers:
+		var spot: Variant = sw.bot_wait_spot(player.global_position, goal.position, radius, height,
+				top_speed, cruise, lag, strictness)
+		if spot == null:
+			continue
+		# Only time spent at the waiting spot counts as waiting.
+		if player.global_position.distance_to(spot) > 1.2:
+			_hazard_wait_since.erase(idx)
+		elif not _hazard_wait_since.has(idx):
+			_hazard_wait_since[idx] = now
+		elif waited > HAZARD_PATIENCE:
+			_hazard_wait_since.erase(idx)
+			_hazard_brave_until[idx] = now + 2.5
+			return goal
+		var g := goal.duplicate()
+		g["position"] = spot
+		g["stop_distance"] = 0.3
+		g["no_brake"] = false
+		g.erase("jump")
+		g.erase("interact")
+		return g
+	_hazard_wait_since.erase(idx)
+	return goal
+
+
 ## Ordered waypoints for bots (Marker3D nodes in group "bot_path", sorted by name).
 func get_bot_path() -> Array[Node3D]:
 	var markers: Array[Node] = find_children("*", "Marker3D", true, false).filter(
@@ -443,6 +499,18 @@ func nav_goal(player: PlayerCharacter, target: Vector3, stop_distance: float = 0
 	if g.get("interact", false) and not g.has("interact_at"):
 		g["interact_at"] = target
 	return g
+
+
+## The walkable spot on the navigation mesh closest to [param target] (or
+## [param target] itself without a mesh). Use it for spots that may lie over
+## the goo, like "next to the cake carrier" while the carrier is on a bridge.
+func nav_snap(target: Vector3) -> Vector3:
+	if not has_navigation() or not is_inside_tree():
+		return target
+	var map := get_world_3d().navigation_map
+	if NavigationServer3D.map_get_iteration_id(map) == 0:
+		return target  # not synced yet (first frame)
+	return NavigationServer3D.map_get_closest_point(map, target)
 
 
 ## Next corner on the navigation path from [param player] to [param target].

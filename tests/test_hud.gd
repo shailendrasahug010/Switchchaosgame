@@ -14,6 +14,9 @@ func _start() -> MatchController:
 	setup.seed = 12
 	var m := await start_match(setup)
 	m.chaos.auto_schedule = false
+	# Keep the CPU buddy still: these tests force all eight events one after
+	# another, and a buddy delivering the cake would end the round first.
+	m.players[1].input = ScriptedInputSource.new()
 	await physics_frames(5)
 	return m
 
@@ -22,6 +25,7 @@ func test_every_event_is_announced_visually_with_a_countdown() -> void:
 	var m := await _start()
 	var hud := m.hud
 	for ev in m.chaos.library:
+		check_eq(m.phase, MatchController.Phase.PLAYING, "%s: the round is still running" % ev.id)
 		m.chaos.force_event(ev.id, false, 3.0)
 		await physics_frames(20)
 		check(hud.is_banner_visible(), "%s: card on screen during the warning" % ev.id)

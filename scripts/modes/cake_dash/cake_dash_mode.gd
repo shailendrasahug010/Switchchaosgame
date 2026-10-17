@@ -438,12 +438,14 @@ func get_bot_goal(p: PlayerCharacter) -> Dictionary:
 			var g := path_goal(p, _path)
 			g["careful"] = true
 			return g
+		# Helpers walk the navigation mesh (around the cookie wall, along the
+		# bridge) to a spot beside the carrier that is on solid ground.
 		var side := _helper_offset(p, carrier)
-		var target := carrier.global_position + side + carrier.velocity * 0.25
+		var target := nav_snap(carrier.global_position + side + carrier.velocity * 0.25)
 		if not cake.helpers.has(p) and cake.helpers.size() < MAX_HELPERS \
 				and p.global_position.distance_to(carrier.global_position) < HELP_RADIUS - 0.5:
-			return {"position": target, "stop_distance": 0.6, "interact": true, "interact_distance": 3.0}
-		return {"position": target, "stop_distance": 0.6}
+			return nav_goal(p, target, 0.6, {"interact": true, "interact_distance": 3.0})
+		return nav_goal(p, target, 0.6)
 	# Loose cake: one bot fetches it (after giving humans a head start).
 	var free_for := MatchClock.now(self) - _cake_free_since
 	var human_close := false
@@ -451,10 +453,10 @@ func get_bot_goal(p: PlayerCharacter) -> Dictionary:
 		if h.global_position.distance_to(cake.global_position) < 7.0 and not h.is_respawning:
 			human_close = true
 	if p == _nearest_bot_to_cake() and (not human_close or free_for > 3.0):
-		return {"position": cake.global_position, "stop_distance": 0.9, "interact": true,
-				"interact_distance": GRAB_RADIUS - 0.4}
+		return nav_goal(p, cake.global_position, 0.9, {"interact": true,
+				"interact_distance": GRAB_RADIUS - 0.4})
 	var ring := Vector3(cos(p.player_index * 1.7), 0, sin(p.player_index * 1.7)) * 2.8
-	return {"position": cake.global_position + ring, "stop_distance": 0.8}
+	return nav_goal(p, nav_snap(cake.global_position + ring), 0.8)
 
 
 func _helper_offset(p: PlayerCharacter, carrier: PlayerCharacter) -> Vector3:

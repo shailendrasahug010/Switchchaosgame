@@ -591,7 +591,11 @@ func _on_player_interact(player: PlayerCharacter) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed(&"pause"):
+	# "ui_cancel" only opens the pause menu here, never closes it — closing
+	# (resuming) is the pause menu's own job (it listens for ui_cancel too,
+	# but only while visible). That split means this never has to guess
+	# whether the pause menu already consumed the same event.
+	if event.is_action_pressed(&"pause") or (event.is_action_pressed(&"ui_cancel") and not is_paused):
 		if phase == Phase.RESULTS:
 			return
 		set_paused(not is_paused)

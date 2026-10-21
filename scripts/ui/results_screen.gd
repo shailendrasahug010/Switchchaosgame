@@ -15,6 +15,12 @@ func setup(p_match: MatchController) -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if visible and event.is_action_pressed(&"ui_cancel"):
+		match_ctl.quit_to_menu()
+		get_viewport().set_input_as_handled()
+
+
 func show_results(r: Dictionary) -> void:
 	for c in get_children():
 		c.queue_free()

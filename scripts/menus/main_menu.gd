@@ -6,6 +6,14 @@ extends Node
 var _play: Button
 
 
+## The title screen is the top of the navigation stack: nothing to go back
+## to, so "back" (Android back button/gesture, or Escape/gamepad B on
+## desktop) closes the game, same as any other Android app's home screen.
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed(&"ui_cancel"):
+		get_tree().quit()
+
+
 func _ready() -> void:
 	AudioManager.play_music(&"menu")
 	add_child(MenuBackdrop.new())

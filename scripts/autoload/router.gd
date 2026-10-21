@@ -1,6 +1,14 @@
 extends Node
 ## Moves between screens with a short fade. Screens are referenced by id so
 ## file paths live in one place.
+##
+## Also bridges the Android back button/gesture to the rest of the game.
+## Android sends that as NOTIFICATION_WM_GO_BACK_REQUEST, not as an input
+## event, so without this every "ui_cancel" handler in the menus (and the
+## pause menu, and the results screen) would never see it and back would do
+## nothing. config/quit_on_go_back is off (project.godot) specifically so we
+## can turn it into an ordinary ui_cancel press instead of an instant,
+## unconditional quit from wherever the player happens to be.
 
 signal scene_changed(id: StringName)
 
@@ -35,6 +43,18 @@ func _ready() -> void:
 	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_fade.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_layer.add_child(_fade)
+
+
+## Android only: the back button/gesture. Hand it to everyone already
+## listening for "ui_cancel" (menus, the pause menu, the results screen)
+## instead of guessing here what "back" should do on whatever screen is
+## current.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
+		var ev := InputEventAction.new()
+		ev.action = &"ui_cancel"
+		ev.pressed = true
+		Input.parse_input_event(ev)
 
 
 func go(id: StringName, fade: bool = true) -> void:

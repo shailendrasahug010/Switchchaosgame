@@ -1,0 +1,716 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/modes/bounce_race/bounce_race_mode.gd" id="1_yvt4w"]
+[ext_resource type="Script" path="res://scripts/core/toy_environment.gd" id="2_cdjmo"]
+[ext_resource type="Script" path="res://scripts/props/block.gd" id="3_ihu70"]
+[ext_resource type="Script" path="res://scripts/props/bounce_pad.gd" id="4_4duwi"]
+[ext_resource type="Script" path="res://scripts/props/spinner.gd" id="5_dve5m"]
+[ext_resource type="Script" path="res://scripts/props/moving_platform.gd" id="6_2wd5h"]
+[ext_resource type="Script" path="res://scripts/props/pendulum.gd" id="7_srp2j"]
+[ext_resource type="Script" path="res://scripts/props/star_pickup.gd" id="8_lbpny"]
+[ext_resource type="FontVariation" path="res://assets/fonts/fredoka_bold.tres" id="9_5nxm5"]
+[ext_resource type="Script" path="res://scripts/props/decor.gd" id="10_7ilsu"]
+[ext_resource type="Script" path="res://scripts/props/kill_zone.gd" id="11_47bj6"]
+[ext_resource type="Script" path="res://scripts/props/checkpoint.gd" id="12_me230"]
+[ext_resource type="Script" path="res://scripts/props/finish_zone.gd" id="13_1qy37"]
+
+[node name="BounceRace" type="Node3D" unique_id=1499357859]
+script = ExtResource("1_yvt4w")
+mode_id = &"bounce_race"
+mission_title = "Bounce Race"
+mission_text = "Race through the bouncy course. First to the finish wins! Fall in the goo? You pop back at the last flag."
+mission_icon = &"bounce"
+round_time = 90.0
+team_mode = false
+kill_height = -6.0
+camera_pitch = -36.0
+camera_distance = 11.5
+camera_min_distance = 9.5
+camera_max_distance = 19.0
+camera_look_ahead = Vector3(0, 0, -4)
+
+[node name="Environment" type="Node3D" parent="." unique_id=1591537730]
+script = ExtResource("2_cdjmo")
+style = 2
+
+[node name="Level" type="Node3D" parent="." unique_id=177585608]
+
+[node name="StartPad" type="StaticBody3D" parent="Level" unique_id=1284319771]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2)
+script = ExtResource("3_ihu70")
+size = Vector3(14, 2, 16)
+color = Color(0.24705882, 0.68235296, 0.41568628, 1)
+top_color = Color(0.5803922, 0.8901961, 0.6901961, 1)
+pattern = 1
+pattern_color = Color(0.78039217, 0.9607843, 0.8392157, 1)
+
+[node name="StartBackWall" type="StaticBody3D" parent="Level" unique_id=2007860052]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 10.25)
+script = ExtResource("3_ihu70")
+size = Vector3(14, 1.2, 0.5)
+color = Color(0.18431373, 0.7882353, 0.47843137, 1)
+top_color = Color(1, 0.972549, 0.93333334, 1)
+pattern = 2
+pattern_color = Color(0.18431373, 0.7882353, 0.47843137, 1)
+pattern_scale = 1.2
+
+[node name="StartRailL" type="StaticBody3D" parent="Level" unique_id=1257748630]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.25, 0.75, 2)
+script = ExtResource("3_ihu70")
+size = Vector3(0.5, 1.1, 16)
+color = Color(0.18431373, 0.7882353, 0.47843137, 1)
+top_color = Color(1, 0.972549, 0.93333334, 1)
+pattern = 2
+pattern_color = Color(0.18431373, 0.7882353, 0.47843137, 1)
+pattern_scale = 1.2
+
+[node name="StartRailR" type="StaticBody3D" parent="Level" unique_id=751209426]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.25, 0.75, 2)
+script = ExtResource("3_ihu70")
+size = Vector3(0.5, 1.1, 16)
+color = Color(0.18431373, 0.7882353, 0.47843137, 1)
+top_color = Color(1, 0.972549, 0.93333334, 1)
+pattern = 2
+pattern_color = Color(0.18431373, 0.7882353, 0.47843137, 1)
+pattern_scale = 1.2
+
+[node name="TrampPost1" type="StaticBody3D" parent="Level" unique_id=1485072471]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0, -11)
+script = ExtResource("3_ihu70")
+size = Vector3(5, 6, 5)
+color = Color(0.8784314, 0.5686275, 0.18039216, 1)
+top_color = Color(1, 0.8509804, 0.5411765, 1)
+
+[node name="TrampPost2" type="StaticBody3D" parent="Level" unique_id=424885555]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, -17.5)
+script = ExtResource("3_ihu70")
+size = Vector3(5, 6, 5)
+color = Color(0.8784314, 0.5686275, 0.18039216, 1)
+top_color = Color(1, 0.8509804, 0.5411765, 1)
+
+[node name="TrampPost3" type="StaticBody3D" parent="Level" unique_id=1273445346]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, -24)
+script = ExtResource("3_ihu70")
+size = Vector3(5, 6, 5)
+color = Color(0.8784314, 0.5686275, 0.18039216, 1)
+top_color = Color(1, 0.8509804, 0.5411765, 1)
+
+[node name="Beam" type="StaticBody3D" parent="Level" unique_id=389979283]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 0, -18)
+script = ExtResource("3_ihu70")
+size = Vector3(1.4, 0.8, 24.4)
+color = Color(1, 0.56078434, 0.7529412, 1)
+top_color = Color(1, 0.8392157, 0.9098039, 1)
+
+[node name="Plaza" type="StaticBody3D" parent="Level" unique_id=1076499663]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -41)
+script = ExtResource("3_ihu70")
+size = Vector3(16, 2, 22)
+color = Color(0.9019608, 0.7058824, 0.13333334, 1)
+top_color = Color(1, 0.8862745, 0.47843137, 1)
+pattern = 3
+pattern_color = Color(1, 0.9529412, 0.76862746, 1)
+pattern_scale = 0.45
+
+[node name="PlazaRailL" type="StaticBody3D" parent="Level" unique_id=1338453416]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.25, 0.75, -41)
+script = ExtResource("3_ihu70")
+size = Vector3(0.5, 1.1, 22)
+color = Color(1, 0.7019608, 0.36078432, 1)
+top_color = Color(1, 0.972549, 0.93333334, 1)
+pattern = 2
+pattern_color = Color(1, 0.7019608, 0.36078432, 1)
+pattern_scale = 1.2
+
+[node name="PlazaRailR" type="StaticBody3D" parent="Level" unique_id=292471443]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.25, 0.75, -41)
+script = ExtResource("3_ihu70")
+size = Vector3(0.5, 1.1, 22)
+color = Color(1, 0.7019608, 0.36078432, 1)
+top_color = Color(1, 0.972549, 0.93333334, 1)
+pattern = 2
+pattern_color = Color(1, 0.7019608, 0.36078432, 1)
+pattern_scale = 1.2
+
+[node name="ClimbBase" type="StaticBody3D" parent="Level" unique_id=1474097451]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -79.95)
+script = ExtResource("3_ihu70")
+size = Vector3(14, 2, 11.1)
+color = Color(0.9411765, 0.5411765, 0.3647059, 1)
+top_color = Color(1, 0.7607843, 0.6392157, 1)
+pattern = 2
+pattern_color = Color(1, 0.8784314, 0.8156863, 1)
+pattern_scale = 0.6
+
+[node name="ClimbRailL" type="StaticBody3D" parent="Level" unique_id=628756762]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.25, 0.75, -79.95)
+script = ExtResource("3_ihu70")
+size = Vector3(0.5, 1.1, 11.1)
+color = Color(1, 0.5411765, 0.29803923, 1)
+top_color = Color(1, 0.972549, 0.93333334, 1)
+pattern = 2
+pattern_color = Color(1, 0.5411765, 0.29803923, 1)
+pattern_scale = 1.2
+
+[node name="ClimbRailR" type="StaticBody3D" parent="Level" unique_id=939169482]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.25, 0.75, -79.95)
+script = ExtResource("3_ihu70")
+size = Vector3(0.5, 1.1, 11.1)
+color = Color(1, 0.5411765, 0.29803923, 1)
+top_color = Color(1, 0.972549, 0.93333334, 1)
+pattern = 2
+pattern_color = Color(1, 0.5411765, 0.29803923, 1)
+pattern_scale = 1.2
+
+[node name="Step1" type="StaticBody3D" parent="Level" unique_id=1346578011]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -90)
+script = ExtResource("3_ihu70")
+size = Vector3(14, 5, 9)
+color = Color(0.9411765, 0.5411765, 0.3647059, 1)
+top_color = Color(1, 0.7607843, 0.6392157, 1)
+pattern = 2
+pattern_color = Color(1, 0.8784314, 0.8156863, 1)
+pattern_scale = 0.6
+
+[node name="Step2" type="StaticBody3D" parent="Level" unique_id=1364571896]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, -98)
+script = ExtResource("3_ihu70")
+size = Vector3(14, 8, 7)
+color = Color(0.9411765, 0.5411765, 0.3647059, 1)
+top_color = Color(1, 0.7607843, 0.6392157, 1)
+pattern = 2
+pattern_color = Color(1, 0.8784314, 0.8156863, 1)
+pattern_scale = 0.6
+
+[node name="Step1RailL" type="StaticBody3D" parent="Level" unique_id=723915339]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.25, 3.75, -90)
+script = ExtResource("3_ihu70")
+size = Vector3(0.5, 1.1, 9)
+color = Color(1, 0.5411765, 0.29803923, 1)
+top_color = Color(1, 0.972549, 0.93333334, 1)
+pattern = 2
+pattern_color = Color(1, 0.5411765, 0.29803923, 1)
+pattern_scale = 1.2
+
+[node name="Step1RailR" type="StaticBody3D" parent="Level" unique_id=234792344]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.25, 3.75, -90)
+script = ExtResource("3_ihu70")
+size = Vector3(0.5, 1.1, 9)
+color = Color(1, 0.5411765, 0.29803923, 1)
+top_color = Color(1, 0.972549, 0.93333334, 1)
+pattern = 2
+pattern_color = Color(1, 0.5411765, 0.29803923, 1)
+pattern_scale = 1.2
+
+[node name="Step2RailL" type="StaticBody3D" parent="Level" unique_id=246538876]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.25, 6.75, -98)
+script = ExtResource("3_ihu70")
+size = Vector3(0.5, 1.1, 7)
+color = Color(1, 0.5411765, 0.29803923, 1)
+top_color = Color(1, 0.972549, 0.93333334, 1)
+pattern = 2
+pattern_color = Color(1, 0.5411765, 0.29803923, 1)
+pattern_scale = 1.2
+
+[node name="Step2RailR" type="StaticBody3D" parent="Level" unique_id=1672241222]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.25, 6.75, -98)
+script = ExtResource("3_ihu70")
+size = Vector3(0.5, 1.1, 7)
+color = Color(1, 0.5411765, 0.29803923, 1)
+top_color = Color(1, 0.972549, 0.93333334, 1)
+pattern = 2
+pattern_color = Color(1, 0.5411765, 0.29803923, 1)
+pattern_scale = 1.2
+
+[node name="Bridge" type="StaticBody3D" parent="Level" unique_id=1684307614]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, -110.25)
+script = ExtResource("3_ihu70")
+size = Vector3(5, 1.2, 17.5)
+color = Color(0.9098039, 0.33333334, 0.6039216, 1)
+top_color = Color(1, 0.76862746, 0.8627451, 1)
+pattern = 2
+pattern_color = Color(1, 0.8901961, 0.93333334, 1)
+pattern_scale = 0.8
+
+[node name="HammerPost0L" type="StaticBody3D" parent="Level" unique_id=1998539087]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 6, -106)
+script = ExtResource("3_ihu70")
+size = Vector3(1.2, 8, 1.2)
+color = Color(1, 0.972549, 0.93333334, 1)
+top_color = Color(1, 0.8392157, 0.9098039, 1)
+
+[node name="HammerPost0R" type="StaticBody3D" parent="Level" unique_id=759897480]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.5, 6, -106)
+script = ExtResource("3_ihu70")
+size = Vector3(1.2, 8, 1.2)
+color = Color(1, 0.972549, 0.93333334, 1)
+top_color = Color(1, 0.8392157, 0.9098039, 1)
+
+[node name="HammerPost1L" type="StaticBody3D" parent="Level" unique_id=1217958067]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 6, -114)
+script = ExtResource("3_ihu70")
+size = Vector3(1.2, 8, 1.2)
+color = Color(1, 0.972549, 0.93333334, 1)
+top_color = Color(1, 0.8392157, 0.9098039, 1)
+
+[node name="HammerPost1R" type="StaticBody3D" parent="Level" unique_id=1839183579]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.5, 6, -114)
+script = ExtResource("3_ihu70")
+size = Vector3(1.2, 8, 1.2)
+color = Color(1, 0.972549, 0.93333334, 1)
+top_color = Color(1, 0.8392157, 0.9098039, 1)
+
+[node name="Slide" type="StaticBody3D" parent="Level" unique_id=420334279]
+transform = Transform3D(1, 0, 0, 0, 0.8574929, 0.5144958, 0, -0.5144958, 0.8574929, 0, 3, -124)
+script = ExtResource("3_ihu70")
+size = Vector3(6, 1, 12.061903)
+color = Color(1, 0.37254903, 0.65882355, 1)
+top_color = Color(1, 0.76862746, 0.8627451, 1)
+pattern = 2
+pattern_color = Color(1, 0.8901961, 0.93333334, 1)
+
+[node name="FinishPad" type="StaticBody3D" parent="Level" unique_id=596943659]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -136)
+script = ExtResource("3_ihu70")
+size = Vector3(16, 2, 14)
+color = Color(0.8784314, 0.5686275, 0.18039216, 1)
+top_color = Color(1, 0.8509804, 0.5411765, 1)
+pattern = 1
+pattern_color = Color(1, 0.9411765, 0.76862746, 1)
+
+[node name="FinishRailL" type="StaticBody3D" parent="Level" unique_id=1883419938]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.25, 0.75, -136)
+script = ExtResource("3_ihu70")
+size = Vector3(0.5, 1.1, 14)
+color = Color(1, 0.7019608, 0.36078432, 1)
+top_color = Color(1, 0.972549, 0.93333334, 1)
+pattern = 2
+pattern_color = Color(1, 0.7019608, 0.36078432, 1)
+pattern_scale = 1.2
+
+[node name="FinishRailR" type="StaticBody3D" parent="Level" unique_id=781152462]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.25, 0.75, -136)
+script = ExtResource("3_ihu70")
+size = Vector3(0.5, 1.1, 14)
+color = Color(1, 0.7019608, 0.36078432, 1)
+top_color = Color(1, 0.972549, 0.93333334, 1)
+pattern = 2
+pattern_color = Color(1, 0.7019608, 0.36078432, 1)
+pattern_scale = 1.2
+
+[node name="FinishBackWall" type="StaticBody3D" parent="Level" unique_id=2011629656]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, -143.25)
+script = ExtResource("3_ihu70")
+size = Vector3(16, 1.2, 0.5)
+color = Color(1, 0.7019608, 0.36078432, 1)
+top_color = Color(1, 0.972549, 0.93333334, 1)
+pattern = 2
+pattern_color = Color(1, 0.7019608, 0.36078432, 1)
+pattern_scale = 1.2
+
+[node name="Obstacles" type="Node3D" parent="." unique_id=1764904251]
+
+[node name="Trampoline1" type="Area3D" parent="Obstacles" unique_id=1633861073]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0, -11)
+script = ExtResource("4_4duwi")
+launch_speed = 16.0
+radius = 2.0
+trampoline = true
+
+[node name="Trampoline2" type="Area3D" parent="Obstacles" unique_id=809200806]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, -17.5)
+script = ExtResource("4_4duwi")
+launch_speed = 16.0
+radius = 2.0
+trampoline = true
+color = Color(0.24705882, 0.6156863, 1, 1)
+
+[node name="Trampoline3" type="Area3D" parent="Obstacles" unique_id=1234159059]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, -24)
+script = ExtResource("4_4duwi")
+launch_speed = 16.0
+radius = 2.0
+trampoline = true
+color = Color(1, 0.8235294, 0.24705882, 1)
+
+[node name="BigSpinner" type="Node3D" parent="Obstacles" unique_id=411132947]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -41.5)
+script = ExtResource("5_dve5m")
+arm_length = 7.4
+degrees_per_second = 62.0
+color = Color(1, 0.37254903, 0.65882355, 1)
+
+[node name="PlazaPadL" type="Area3D" parent="Obstacles" unique_id=1189641666]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, -36)
+script = ExtResource("4_4duwi")
+
+[node name="PlazaPadR" type="Area3D" parent="Obstacles" unique_id=404454930]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -47)
+script = ExtResource("4_4duwi")
+
+[node name="Slider1" type="AnimatableBody3D" parent="Obstacles" unique_id=990436735]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -55.4)
+script = ExtResource("6_2wd5h")
+size = Vector3(6, 0.6, 3.6)
+travel = Vector3(4, 0, 0)
+period = 3.8
+hold = 0.1
+
+[node name="Slider2" type="AnimatableBody3D" parent="Obstacles" unique_id=1458638241]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -60.6)
+script = ExtResource("6_2wd5h")
+size = Vector3(6, 0.6, 3.6)
+color = Color(1, 0.8235294, 0.49803922, 1)
+travel = Vector3(-4, 0, 0)
+period = 4.2
+phase = 0.25
+hold = 0.1
+
+[node name="Slider3" type="AnimatableBody3D" parent="Obstacles" unique_id=698607371]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -65.8)
+script = ExtResource("6_2wd5h")
+size = Vector3(6, 0.6, 3.6)
+color = Color(0.7019608, 0.60784316, 1, 1)
+travel = Vector3(4, 0, 0)
+period = 4.6
+phase = 0.5
+hold = 0.1
+
+[node name="Slider4" type="AnimatableBody3D" parent="Obstacles" unique_id=1243706517]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -71)
+script = ExtResource("6_2wd5h")
+size = Vector3(6, 0.6, 3.6)
+color = Color(0.49019608, 1, 0.6901961, 1)
+travel = Vector3(-4, 0, 0)
+period = 5.0
+phase = 0.75
+hold = 0.1
+
+[node name="ClimbPad0L" type="Area3D" parent="Obstacles" unique_id=663525324]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, -82.6)
+script = ExtResource("4_4duwi")
+launch_speed = 15.5
+color = Color(1, 0.8235294, 0.24705882, 1)
+
+[node name="ClimbPad3L" type="Area3D" parent="Obstacles" unique_id=1046503715]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 3, -91.6)
+script = ExtResource("4_4duwi")
+launch_speed = 15.5
+
+[node name="ClimbPad0M" type="Area3D" parent="Obstacles" unique_id=1025076003]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -82.6)
+script = ExtResource("4_4duwi")
+launch_speed = 15.5
+color = Color(1, 0.8235294, 0.24705882, 1)
+
+[node name="ClimbPad3M" type="Area3D" parent="Obstacles" unique_id=1349005094]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -91.6)
+script = ExtResource("4_4duwi")
+launch_speed = 15.5
+
+[node name="ClimbPad0R" type="Area3D" parent="Obstacles" unique_id=1174663510]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, -82.6)
+script = ExtResource("4_4duwi")
+launch_speed = 15.5
+color = Color(1, 0.8235294, 0.24705882, 1)
+
+[node name="ClimbPad3R" type="Area3D" parent="Obstacles" unique_id=1841668025]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 3, -91.6)
+script = ExtResource("4_4duwi")
+launch_speed = 15.5
+
+[node name="Hammer1" type="Node3D" parent="Obstacles" unique_id=565510363]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, -106)
+script = ExtResource("7_srp2j")
+period = 3.0
+frame_width = 7.0
+
+[node name="Hammer2" type="Node3D" parent="Obstacles" unique_id=663839191]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, -114)
+script = ExtResource("7_srp2j")
+period = 3.4
+phase = 0.5
+frame_width = 7.0
+color = Color(0.654902, 0.48235294, 1, 1)
+
+[node name="Stars" type="Node3D" parent="." unique_id=816754835]
+
+[node name="StarT1" type="Area3D" parent="Stars" unique_id=691994116]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 4.3, -11)
+script = ExtResource("8_lbpny")
+
+[node name="StarT2" type="Area3D" parent="Stars" unique_id=79621423]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 4.3, -17.5)
+script = ExtResource("8_lbpny")
+
+[node name="StarT3" type="Area3D" parent="Stars" unique_id=2043427043]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 4.3, -24)
+script = ExtResource("8_lbpny")
+
+[node name="StarPL" type="Area3D" parent="Stars" unique_id=739326757]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 4.3, -36)
+script = ExtResource("8_lbpny")
+
+[node name="StarPR" type="Area3D" parent="Stars" unique_id=1185672557]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 4.3, -47)
+script = ExtResource("8_lbpny")
+
+[node name="StarS1" type="Area3D" parent="Stars" unique_id=1471287044]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, -58)
+script = ExtResource("8_lbpny")
+
+[node name="StarS2" type="Area3D" parent="Stars" unique_id=1119549022]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, -68.4)
+script = ExtResource("8_lbpny")
+
+[node name="StarC1" type="Area3D" parent="Stars" unique_id=322501351]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 4.2, -88)
+script = ExtResource("8_lbpny")
+
+[node name="StarC2" type="Area3D" parent="Stars" unique_id=95400699]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 7.2, -98)
+script = ExtResource("8_lbpny")
+
+[node name="StarB" type="Area3D" parent="Stars" unique_id=937802365]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.3, -110)
+script = ExtResource("8_lbpny")
+
+[node name="Decor" type="Node3D" parent="." unique_id=571935226]
+
+[node name="RaceSign" type="Label3D" parent="Decor" unique_id=1007493209]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.4, 10.5)
+pixel_size = 0.01
+modulate = Color(1, 0.9529412, 0.6392157, 1)
+outline_modulate = Color(0.18431373, 0.627451, 0.36862746, 1)
+text = "BOUNCE RACE"
+font = ExtResource("9_5nxm5")
+font_size = 140
+outline_size = 28
+
+[node name="StartBalloons1" type="Node3D" parent="Decor" unique_id=578628311]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.2, 0, 9)
+script = ExtResource("10_7ilsu")
+kind = 0
+
+[node name="StartBalloons2" type="Node3D" parent="Decor" unique_id=1960671067]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.2, 0, 9)
+script = ExtResource("10_7ilsu")
+kind = 0
+color = Color(0.24705882, 0.6156863, 1, 1)
+
+[node name="LagoonSign" type="Label3D" parent="Decor" unique_id=623747499]
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, -8.5, 2.6, -9)
+pixel_size = 0.01
+outline_modulate = Color(0.6392157, 0.36078432, 0.9411765, 1)
+text = "Trampoline Lagoon"
+font = ExtResource("9_5nxm5")
+font_size = 72
+outline_size = 14
+
+[node name="PlazaSign" type="Label3D" parent="Decor" unique_id=677731805]
+transform = Transform3D(0.8660254, 0, -0.5, 0, 1, 0, 0.5, 0, 0.8660254, 9, 2.6, -33)
+pixel_size = 0.01
+outline_modulate = Color(0.8784314, 0.5686275, 0.18039216, 1)
+text = "Spinner Plaza"
+font = ExtResource("9_5nxm5")
+font_size = 72
+outline_size = 14
+
+[node name="SliderSign" type="Label3D" parent="Decor" unique_id=1127250205]
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, -9, 2, -56)
+pixel_size = 0.01
+outline_modulate = Color(0.24705882, 0.6156863, 1, 1)
+text = "Slidey Platforms"
+font = ExtResource("9_5nxm5")
+font_size = 64
+
+[node name="ClimbSign" type="Label3D" parent="Decor" unique_id=1997084514]
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, -8.5, 3.6, -80)
+pixel_size = 0.01
+outline_modulate = Color(0.9411765, 0.5411765, 0.3647059, 1)
+text = "Boing Climb"
+font = ExtResource("9_5nxm5")
+font_size = 72
+outline_size = 14
+
+[node name="BridgeSign" type="Label3D" parent="Decor" unique_id=1570116777]
+transform = Transform3D(0.8660254, 0, -0.5, 0, 1, 0, 0.5, 0, 0.8660254, 6.5, 8.6, -104)
+pixel_size = 0.01
+outline_modulate = Color(0.9098039, 0.33333334, 0.6039216, 1)
+text = "Hammer Bridge"
+font = ExtResource("9_5nxm5")
+font_size = 72
+outline_size = 14
+
+[node name="Podium1" type="StaticBody3D" parent="Decor" unique_id=336370060]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, -140)
+script = ExtResource("3_ihu70")
+size = Vector3(2.4, 1.2, 2.4)
+color = Color(1, 0.8235294, 0.24705882, 1)
+top_color = Color(1, 0.9529412, 0.6392157, 1)
+
+[node name="Podium2" type="StaticBody3D" parent="Decor" unique_id=1682080399]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.6, 0.8, -140)
+script = ExtResource("3_ihu70")
+size = Vector3(2.4, 0.8, 2.4)
+color = Color(0.7882353, 0.7882353, 0.8627451, 1)
+top_color = Color(0.93333334, 0.93333334, 0.972549, 1)
+
+[node name="Podium3" type="StaticBody3D" parent="Decor" unique_id=1096753004]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6, 0.5, -140)
+script = ExtResource("3_ihu70")
+size = Vector3(2.4, 0.5, 2.4)
+color = Color(0.8784314, 0.5686275, 0.18039216, 1)
+top_color = Color(1, 0.8509804, 0.5411765, 1)
+
+[node name="FinishBalloons1" type="Node3D" parent="Decor" unique_id=715869477]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.5, 0, -141)
+script = ExtResource("10_7ilsu")
+kind = 0
+color = Color(1, 0.8235294, 0.24705882, 1)
+
+[node name="FinishBalloons2" type="Node3D" parent="Decor" unique_id=1689891840]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.5, 0, -141)
+script = ExtResource("10_7ilsu")
+kind = 0
+
+[node name="Markers" type="Node3D" parent="." unique_id=432311112]
+
+[node name="StartLine" type="Marker3D" parent="Markers" unique_id=250881032 groups=["start_line"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 6)
+
+[node name="Spawn1" type="Marker3D" parent="Markers" unique_id=1148850626 groups=["spawn"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.05, 7)
+
+[node name="Spawn2" type="Marker3D" parent="Markers" unique_id=1238658165 groups=["spawn"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0.05, 7.5)
+
+[node name="Spawn3" type="Marker3D" parent="Markers" unique_id=1654147060 groups=["spawn"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0.05, 7.5)
+
+[node name="Spawn4" type="Marker3D" parent="Markers" unique_id=321537630 groups=["spawn"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0.05, 7)
+
+[node name="Path01" type="Marker3D" parent="Markers" unique_id=992488857 groups=["bot_path"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3)
+
+[node name="Path02" type="Marker3D" parent="Markers" unique_id=1776333332 groups=["bot_path"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0, -4.5)
+
+[node name="Path03" type="Marker3D" parent="Markers" unique_id=1736262981 groups=["bot_path"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0, -11)
+metadata/jump = true
+metadata/jump_distance = 5.0
+metadata/no_brake = true
+metadata/arrive_radius = 2.0
+
+[node name="Path04" type="Marker3D" parent="Markers" unique_id=1571367001 groups=["bot_path"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, -17.5)
+metadata/no_brake = true
+metadata/arrive_radius = 2.0
+
+[node name="Path05" type="Marker3D" parent="Markers" unique_id=501888436 groups=["bot_path"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, -24)
+metadata/no_brake = true
+metadata/arrive_radius = 2.0
+
+[node name="Path06" type="Marker3D" parent="Markers" unique_id=1894638550 groups=["bot_path"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -34)
+
+[node name="Path07" type="Marker3D" parent="Markers" unique_id=1267282808 groups=["bot_path"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 0, -41.5)
+
+[node name="Path08" type="Marker3D" parent="Markers" unique_id=1451079720 groups=["bot_path"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -50.2)
+
+[node name="Path09" type="Marker3D" parent="Markers" unique_id=242077680 groups=["bot_path"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -55.4)
+metadata/jump = true
+metadata/jump_distance = 3.8
+
+[node name="Path10" type="Marker3D" parent="Markers" unique_id=1738940738 groups=["bot_path"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -60.6)
+metadata/jump = true
+metadata/jump_distance = 3.8
+
+[node name="Path11" type="Marker3D" parent="Markers" unique_id=1124962464 groups=["bot_path"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -65.8)
+metadata/jump = true
+metadata/jump_distance = 3.8
+
+[node name="Path12" type="Marker3D" parent="Markers" unique_id=1723298428 groups=["bot_path"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -71)
+metadata/jump = true
+metadata/jump_distance = 3.8
+
+[node name="Path13" type="Marker3D" parent="Markers" unique_id=1552135097 groups=["bot_path"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -77)
+metadata/jump = true
+metadata/jump_distance = 4.6
+
+[node name="Path14" type="Marker3D" parent="Markers" unique_id=963744810 groups=["bot_path"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -82.6)
+metadata/no_pass = true
+
+[node name="Path15" type="Marker3D" parent="Markers" unique_id=1052955920 groups=["bot_path"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -88.5)
+
+[node name="Path16" type="Marker3D" parent="Markers" unique_id=15126651 groups=["bot_path"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -91.6)
+metadata/no_pass = true
+
+[node name="Path17" type="Marker3D" parent="Markers" unique_id=200303797 groups=["bot_path"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, -97.5)
+
+[node name="Path18" type="Marker3D" parent="Markers" unique_id=1368256401 groups=["bot_path"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, -103)
+
+[node name="Path19" type="Marker3D" parent="Markers" unique_id=309247859 groups=["bot_path"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, -110)
+
+[node name="Path20" type="Marker3D" parent="Markers" unique_id=1448579628 groups=["bot_path"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, -117.5)
+
+[node name="Path21" type="Marker3D" parent="Markers" unique_id=1407929545 groups=["bot_path"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -124)
+
+[node name="Path22" type="Marker3D" parent="Markers" unique_id=1001667020 groups=["bot_path"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -133.5)
+
+[node name="JellyGoo" type="Area3D" parent="." unique_id=1402319823]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.5, -68)
+script = ExtResource("11_47bj6")
+size = Vector3(80, 8, 175)
+goo_color = Color(0.6392157, 0.36078432, 0.9411765, 1)
+
+[node name="Checkpoint1" type="Area3D" parent="." unique_id=1143754460]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -31.6)
+script = ExtResource("12_me230")
+width = 15.0
+
+[node name="Checkpoint2" type="Area3D" parent="." unique_id=1678912273]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -48.6)
+script = ExtResource("12_me230")
+index = 2
+width = 15.0
+color = Color(0.24705882, 0.6156863, 1, 1)
+
+[node name="Checkpoint3" type="Area3D" parent="." unique_id=1570060403]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -76)
+script = ExtResource("12_me230")
+index = 3
+width = 13.0
+color = Color(1, 0.7019608, 0.36078432, 1)
+
+[node name="Checkpoint4" type="Area3D" parent="." unique_id=1359108853]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, -96.5)
+script = ExtResource("12_me230")
+index = 4
+width = 13.0
+color = Color(0.654902, 0.48235294, 1, 1)
+
+[node name="FinishLine" type="Area3D" parent="." unique_id=61255707]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -133)
+script = ExtResource("13_1qy37")
+size = Vector3(15, 4, 3)
+label = "FINISH!"

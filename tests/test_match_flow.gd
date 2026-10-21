@@ -1,0 +1,147 @@
+extends TestCase
+## Plays whole rounds with CPU players and checks the round lifecycle:
+## intro -> countdown -> playing -> finished -> results, scoring, restart.
+
+
+func _play_round(mode_id: StringName, seed_value: int, max_seconds: float = 140.0) -> MatchController:
+	var setup := MatchSetup.quick(mode_id, 0, 4)
+	setup.seed = seed_value
+	var m := await start_match(setup)
+	if not check(m != null, "match scene loaded for %s" % mode_id):
+		return null
+	var started: Array[StringName] = []
+	var ended: Array[StringName] = []
+	var announced: Array[StringName] = []
+	m.chaos.event_announced.connect(func(ev: ChaosEvent, _t: float) -> void: announced.append(ev.id))
+	m.chaos.event_started.connect(func(ev: ChaosEvent) -> void: started.append(ev.id))
+	m.chaos.event_ended.connect(func(ev: ChaosEvent) -> void: ended.append(ev.id))
+	var frames := 0
+	var limit := int(max_seconds * 60.0)
+	while m.phase != MatchController.Phase.RESULTS and frames < limit:
+		await tree.physics_frame
+		frames += 1
+	note("%s seed %d: success=%s, play time %.1fs, events started %s" % [mode_id, seed_value, m.success, m.elapsed, str(started)])
+	note("scores: %s" % str(range(m.players.size()).map(func(i: int) -> int: return m.score.total(i))))
+	check_eq(m.phase, MatchController.Phase.RESULTS, "round reached the results screen")
+	check(m.results_screen.visible, "results screen is visible")
+	check(m.score.team_total() > 0, "someone scored points")
+	check(started.size() >= 2, "at least two chaos events happened during the round")
+	# Every started event must have been announced first.
+	for id in started:
+		check(announced.has(id), "event %s was announced before starting" % id)
+	# After the round all rule changes are gone.
+	check(m.chaos.rules.is_empty(), "no chaos modifiers left after the round")
+	for p in m.players:
+		check_near(p.stat(&"gravity"), 1.0, 0.0001, "gravity back to normal for %s" % p.name)
+		check(not p.is_reversed(), "controls not reversed after round for %s" % p.name)
+	return m
+
+
+func test_cake_dash_full_round_with_bots() -> void:
+	var m := await _play_round(&"cake_dash", 1234)
+	if m:
+		var mode := m.mode as CakeDashMode
+		note("cake candles left: %d, progress %.2f, delivered=%s" % [mode.cake.candles, mode.progress(), mode.delivered])
+		check(mode.progress() > 0.3, "CPU team carried the cake at least 30% of the way")
+	await end_scene()
+
+
+func test_button_mayhem_full_round_with_bots() -> void:
+	var m := await _play_round(&"button_mayhem", 4321)
+	if m:
+		var mode := m.mode as ButtonMayhemMode
+		note("button presses right: %d / %d, wave %d, completed=%s" % [mode.right_presses, mode.total_needed(),
+				mode.wave, mode.completed])
+		var wrong := 0
+		for i in m.players.size():
+			wrong += int(m.score.get_stat(i, &"wrong_presses"))
+		note("wrong presses: %d" % wrong)
+		check(mode.right_presses >= 6, "CPU team pressed at least half of the buttons in order")
+	await end_scene()
+
+
+## CPU buddies must follow the cake around the cookie wall (navigation mesh),
+## time their way past the swinging hammers on the bridge, and never stand
+## stuck somewhere far from the cake. Before this was fixed, the same five
+## rounds had 88 falls into the frosting (up to 13 per buddy per round).
+func test_cake_dash_cpu_buddies_keep_up_with_the_cake() -> void:
+	var total_falls := 0
+	for seed_value in [11, 12, 13, 14, 15]:
+		var setup := MatchSetup.quick(&"cake_dash", 0, 4)
+		setup.seed = seed_value
+		var m := await start_match(setup)
+		if not check(m != null, "match scene loaded"):
+			return
+		var mode := m.mode as CakeDashMode
+		var falls: Array[int] = [0, 0, 0, 0]
+		for i in m.players.size():
+			var idx := i
+			m.players[i].fell_out.connect(func() -> void: falls[idx] += 1)
+		var trail: Array = [[], [], [], []]
+		var still: Array[int] = [0, 0, 0, 0]
+		var worst_still: Array[int] = [0, 0, 0, 0]
+		var frames := 0
+		while m.phase != MatchController.Phase.RESULTS and frames < 140 * 60:
+			await tree.physics_frame
+			frames += 1
+			if frames % 60 != 0 or m.phase != MatchController.Phase.PLAYING or mode.delivered:
+				continue
+			# Once a second: is anyone standing still far away from the cake?
+			for i in m.players.size():
+				var p := m.players[i]
+				var t: Array = trail[i]
+				t.append(p.global_position)
+				var moved := 99.0 if t.size() < 7 else (t[-1] as Vector3).distance_to(t[-7])
+				var far := p.global_position.distance_to(mode.cake.global_position) > 12.0
+				still[i] = still[i] + 1 if (far and moved < 1.5 and not p.is_respawning) else 0
+				worst_still[i] = maxi(worst_still[i], still[i])
+		var round_falls := 0
+		for f in falls:
+			round_falls += f
+		total_falls += round_falls
+		note("seed %d: delivered=%s in %.1fs, falls %s, longest stand-still far from the cake %s s"
+				% [seed_value, mode.delivered, m.elapsed, str(falls), str(worst_still)])
+		check(mode.delivered, "seed %d: the CPU team delivered the cake" % seed_value)
+		for i in worst_still.size():
+			check(worst_still[i] <= 8, "seed %d: %s stood stuck far from the cake for %d s" % [
+					seed_value, m.players[i].character_id, worst_still[i]])
+		await end_scene()
+	check(total_falls <= 8, "CPU buddies fell into the frosting %d times in 5 rounds (8 allowed)" % total_falls)
+
+
+func test_bounce_race_full_round_with_bots() -> void:
+	var m := await _play_round(&"bounce_race", 777)
+	if m:
+		var mode := m.mode as BounceRaceMode
+		note("finish order: %s" % str(mode.finish_order))
+		check(mode.finish_order.size() >= 2, "at least two CPU racers reached the finish")
+		if not mode.finish_order.is_empty():
+			var winner := mode.finish_order[0]
+			check(m.score.total(winner) > 0, "the winner scored points")
+			check(int(m.score.get_stat(winner, &"won")) == 1, "the winner got the win stat")
+	await end_scene()
+
+
+func test_restart_creates_fresh_round() -> void:
+	var setup := MatchSetup.quick(&"cake_dash", 1, 3)
+	setup.seed = 99
+	var m := await start_match(setup)
+	await seconds(3.0)
+	m.request_finish(false)
+	var frames := 0
+	while m.phase != MatchController.Phase.RESULTS and frames < 600:
+		await tree.physics_frame
+		frames += 1
+	check_eq(m.phase, MatchController.Phase.RESULTS, "forced finish reaches results")
+	m.restart_round()
+	# Router fades out then swaps the scene.
+	for i in 90:
+		await tree.process_frame
+	var m2 := tree.current_scene as MatchController
+	check(m2 != null and m2 != m, "a new match scene was created")
+	if m2:
+		check_eq(m2.phase, MatchController.Phase.INTRO, "new round starts at the intro")
+		check_eq(m2.score.team_total(), 0, "scores reset in the new round")
+		check(m2.chaos.rules.is_empty(), "no chaos left over in the new round")
+		check_near(m2.time_left, m2.round_length, 0.01, "timer reset")
+	await end_scene()

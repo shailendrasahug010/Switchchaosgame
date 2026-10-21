@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ChaosEvent" format=3]
+
+[ext_resource type="Script" path="res://scripts/chaos/chaos_event.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"bounce"
+display_name = "Bounce Mode"
+tagline = "The floor is a trampoline!"
+tip = "You bounce all the time. Hold jump to bounce even higher!"
+duration = 11.0
+weight = 1.0
+color = Color(1.0, 0.4, 0.7, 1)
+icon = &"bounce"
+exclusive_group = &"floor"
+modifiers = {
+&"cake_wobble": 1.25,
+&"floor_bounce": 0.82,
+&"min_bounce": 7.5
+}
+changes_controls = false
+vfx = &"bounce"
+reaction = &"happy"

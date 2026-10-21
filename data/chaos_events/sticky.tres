@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="ChaosEvent" format=3]
+
+[ext_resource type="Script" path="res://scripts/chaos/chaos_event.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"sticky"
+display_name = "Sticky Mode"
+tagline = "Oh no, the floor is honey!"
+tip = "Everything is sticky and slow. Little hops help you move!"
+duration = 10.0
+weight = 1.0
+color = Color(0.98, 0.74, 0.18, 1)
+icon = &"sticky"
+exclusive_group = &"floor"
+modifiers = {
+&"cake_wobble": 0.8,
+&"speed": 0.5,
+&"jump": 0.7,
+&"traction": 1.6
+}
+changes_controls = false
+vfx = &"sticky"
+reaction = &"surprised"
